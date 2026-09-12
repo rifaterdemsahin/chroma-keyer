@@ -39,6 +39,9 @@
         <h1>Canva-ready color key, audio, unique files, logs</h1>
         <p>This update changes the production output. The keyer no longer dumps a silent black-and-white alpha movie. It now writes a unique, full-color clip with the green removed and the original soundtrack still attached — a file you can drop straight into Canva’s video editor.</p>
 
+        <h2>Agent-first + localhost libraries</h2>
+        <p>Day-to-day run is <strong>Grok / Claude / Antigravity (agy)</strong> in the terminal, not the GitHub Pages UI. <code>AGENTS.md</code> plus <code>python3 autocrop_rvm.py --watch</code> let the agent monitor <code>input/</code>. Optional docs server: <code>python3 serve.py</code> → <a href="http://127.0.0.1:8876/process.html" style="color:#38bdf8;">http://127.0.0.1:8876/process.html</a> so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
+
         <hr>
 
         <h2>What changed</h2>

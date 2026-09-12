@@ -459,18 +459,10 @@ def resolve_input(cli_path: str | None) -> Path:
     return candidates[0]
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Remove green screen, keep color + audio, write a unique Canva-ready WebM."
-    )
-    parser.add_argument("input", nargs="?", help="Source .mp4 / .mov clip")
-    parser.add_argument("--engine", choices=("chromakey", "rvm"), default="chromakey")
-    parser.add_argument("--similarity", type=float, default=0.10, help="chromakey similarity (0-1)")
-    parser.add_argument("--blend", type=float, default=0.04, help="chromakey edge blend (0-1)")
-    parser.add_argument("--padding", type=int, default=16, help="pixels to inset the green crop box")
-    args = parser.parse_args()
+VIDEO_EXTS = {".mp4", ".mov", ".MP4", ".MOV", ".m4v", ".M4V"}
 
-    input_path = resolve_input(args.input)
+
+def process_clip(input_path: Path, args: argparse.Namespace) -> int:
     names = unique_names(input_path)
     logger = ProcessLogger(names["log"], names["run_id"])
     try:
@@ -534,6 +526,71 @@ def main() -> int:
         raise
     finally:
         logger.close()
+
+
+def list_inbox(folder: Path) -> list[Path]:
+    files: list[Path] = []
+    for path in folder.iterdir():
+        if path.is_file() and path.suffix in VIDEO_EXTS:
+            files.append(path)
+    files.sort(key=lambda p: p.stat().st_mtime)
+    return files
+
+
+def watch_inbox(folder: Path, args: argparse.Namespace) -> int:
+    folder.mkdir(parents=True, exist_ok=True)
+    seen: set[tuple[str, float, int]] = set()
+    print(f"[watch] monitoring {folder} for .mp4/.mov  (Ctrl+C to stop)", flush=True)
+    print("[watch] drop a green-screen clip in; a unique output/ file + logs/ entry will appear.", flush=True)
+    while True:
+        for path in list_inbox(folder):
+            st = path.stat()
+            key = (str(path.resolve()), st.st_mtime, st.st_size)
+            if key in seen:
+                continue
+            print(f"[watch] new clip {path.name} ({st.st_size / (1024 * 1024):.1f} MB)", flush=True)
+            try:
+                rc = process_clip(path, args)
+            except Exception as exc:
+                print(f"[watch] FAILED {path.name}: {exc}", flush=True)
+                rc = 1
+            seen.add(key)
+            if rc != 0:
+                print(f"[watch] FAILED {path.name} rc={rc}", flush=True)
+        time.sleep(2.5)
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Remove green screen, keep color + audio, write a unique Canva-ready WebM."
+    )
+    parser.add_argument("input", nargs="?", help="Source .mp4 / .mov clip")
+    parser.add_argument("--engine", choices=("chromakey", "rvm"), default="chromakey")
+    parser.add_argument("--similarity", type=float, default=0.10, help="chromakey similarity (0-1)")
+    parser.add_argument("--blend", type=float, default=0.04, help="chromakey edge blend (0-1)")
+    parser.add_argument("--padding", type=int, default=16, help="pixels to inset the green crop box")
+    parser.add_argument(
+        "--watch",
+        nargs="?",
+        const="input",
+        metavar="DIR",
+        help="Monitor DIR (default: input/) and key each new clip. For Grok / Claude / Antigravity.",
+    )
+    args = parser.parse_args()
+
+    if args.watch is not None:
+        folder = Path(args.watch).expanduser()
+        if not folder.is_absolute():
+            folder = ROOT / folder
+        try:
+            return watch_inbox(folder, args)
+        except KeyboardInterrupt:
+            print("\n[watch] stopped", flush=True)
+            return 0
+
+    input_path = resolve_input(args.input)
+    return process_clip(input_path, args)
 
 
 if __name__ == "__main__":

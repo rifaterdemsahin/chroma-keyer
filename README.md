@@ -1,41 +1,45 @@
 # chroma-keyer
 Clean green screen with code using AI on Apple Silicon.
 
-## Live Demo
-Docs site: [GitHub Pages](https://rifaterdemsahin.github.io/chroma-keyer/)
+**Default:** a terminal AI agent (Grok, Claude, Antigravity/agy) runs and monitors the keyer. The HTML site is optional docs. If you open the docs at all, use **localhost** so the browser can reach local `output/` and `logs/` — not GitHub Pages.
+
+## Agents
+| Agent | Install | In this repo |
+| --- | --- | --- |
+| [Grok Build](https://x.ai/cli) | `curl -fsSL https://x.ai/cli/install.sh \| bash` | `grok` |
+| [Claude Code](https://code.claude.com/docs/en/overview) | `curl -fsSL https://claude.ai/install.sh \| bash` | `claude` |
+| [Antigravity (agy)](https://antigravity.google/download/) | [download](https://antigravity.google/download/) or CLI install | open folder / Manager |
+
+Paste the monitor prompt from [process.html](process.html). Repo instructions for agents: [AGENTS.md](AGENTS.md).
+
+```bash
+python3 autocrop_rvm.py --watch          # monitor input/
+python3 autocrop_rvm.py clip.mp4         # one file
+python3 serve.py                         # http://127.0.0.1:8876/ (local libraries)
+```
+
+## Local servers (not GitHub Pages)
+| Library | URL |
+| --- | --- |
+| Process | http://127.0.0.1:8876/process.html |
+| Output player | http://127.0.0.1:8876/output.html |
+| Unique clips | http://127.0.0.1:8876/output/ |
+| Logs | http://127.0.0.1:8876/logs/ |
+| Inbox | http://127.0.0.1:8876/input/ |
+
+Public snapshot only: [GitHub Pages](https://rifaterdemsahin.github.io/chroma-keyer/)
 
 ## What it writes
-Each run creates a **unique** Canva-ready file:
-
-- Full-color subject (not black-and-white)
-- Green background removed (VP9 WebM with alpha)
-- Original audio kept
-- Process + performance log
+Unique Canva-ready file each run: color subject, green removed (VP9 + alpha), original audio, process log.
 
 ```
 output/keyed_<clip>_<timestamp>_<id>.webm
 logs/process_<timestamp>_<id>.log
 ```
 
-## Run from the command prompt
-
-```bash
-python3 autocrop_rvm.py
-python3 autocrop_rvm.py /path/to/greenscreen.mp4
-```
-
-Needs **ffmpeg** (`brew install ffmpeg`) and Python **Pillow**.
-
-Ask an AI agent in this repo to run the same command. Full copy-paste prompt: [process.html](process.html). Changelog: [update.html](update.html).
-
 ## Canva
-Uploads → Upload files → drop the `.webm` on a video timeline. Transparent pixels let your Canva background show through; sound is already on the clip.
+Project: https://canva.link/feekl13cfrcl5y5 — Uploads → drop the `.webm` on the timeline.
 
 ## Engines
-- Default: ffmpeg `chromakey` + `despill` after an auto-crop of the green backdrop (keeps color, mic, and audio).
-- Optional: `python3 autocrop_rvm.py --engine rvm` — Robust Video Matting on Apple Silicon MPS when PyTorch is installed.
-
-## Google Antigravity / any CLI agent
-> Monitor this folder for green-screen `.mov` or `.mp4` files. Run `python3 autocrop_rvm.py <file>`. Keep audio, keep color, remove the green to transparent alpha, write a unique filename under `output/`, and print performance logs.
-
-Set terminal command execution to auto-approve for unattended runs.
+- Default: ffmpeg chromakey + despill after auto-crop.
+- Optional: `--engine rvm` (PyTorch MPS). Needs ffmpeg with libvpx-vp9 and Pillow.

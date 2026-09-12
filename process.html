@@ -17,8 +17,17 @@
         pre { background: #0f172a; padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; color: #7dd3fc; font-size: 0.9rem; border: 1px solid #334155; }
         code { color: #7dd3fc; }
         .badge { display: inline-block; background: #0284c7; color: white; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; }
-        ol.steps li { margin-bottom: 0.6rem; }
+        ol.steps li, ul li { margin-bottom: 0.55rem; }
         .callout { background: #0f172a; border-left: 3px solid var(--accent); padding: 0.9rem 1.1rem; border-radius: 6px; }
+        a.ext { color: #38bdf8; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid #334155; color: #cbd5e1; font-size: 0.95rem; vertical-align: top; }
+        th { color: #94a3b8; font-weight: 600; }
+        .agents { display: grid; grid-template-columns: 1fr; gap: 0.8rem; }
+        @media (min-width: 720px) { .agents { grid-template-columns: 1fr 1fr 1fr; } }
+        .agent { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1rem; }
+        .agent h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+        .agent p { font-size: 0.9rem; margin: 0.35rem 0; }
     </style>
 </head>
 <body>
@@ -32,102 +41,134 @@
     </div>
 
     <div class="container">
-        <p><span class="badge">Command prompt + AI agent</span></p>
+        <p><span class="badge">Agent-first · localhost libraries</span></p>
         <h1>How to run this project</h1>
-        <p>The keyer is a local Python + ffmpeg job. It crops to the green screen, removes the green, keeps the subject in <strong>full color</strong>, keeps the original <strong>sound</strong>, and writes a unique Canva-ready <code>.webm</code> with a transparent alpha channel. Every run also writes a process + performance log.</p>
+        <p>This is a <strong>terminal job</strong>. The usual way is an AI agent — <strong>Grok</strong>, <strong>Claude</strong>, or <strong>Antigravity (agy)</strong> — that launches the keyer, watches the log, and reports the unique output path. The HTML pages are optional docs. If you open them at all, use <strong>localhost</strong> so the browser can reach local clips, logs, and libraries. Do not depend on GitHub Pages for day-to-day work.</p>
 
         <hr>
 
-        <h2>1. One-time setup</h2>
-        <p>In Terminal (or the agent’s command prompt), from this repo:</p>
-<pre>cd /Users/rifaterdemsahin/projects/chroma-keyer
-brew install ffmpeg
-python3 -c "from PIL import Image; print('Pillow OK')"</pre>
-        <p>If Pillow is missing: <code>pip3 install pillow</code>. ffmpeg must include <code>libvpx-vp9</code> (Homebrew’s ffmpeg does).</p>
+        <h2>1. Agents (default)</h2>
+        <p>Open this repo in the agent. It already has <code>AGENTS.md</code>. Paste the monitor prompt below, or just say “watch input and key new clips.”</p>
+
+        <div class="agents">
+            <div class="agent">
+                <h3>Grok Build</h3>
+                <p><a class="ext" href="https://x.ai/cli" target="_blank" rel="noopener">x.ai/cli</a> · <a class="ext" href="https://docs.x.ai/build/overview" target="_blank" rel="noopener">docs</a></p>
+                <pre style="margin:0.5rem 0 0;">curl -fsSL https://x.ai/cli/install.sh | bash
+cd /Users/rifaterdemsahin/projects/chroma-keyer
+grok</pre>
+            </div>
+            <div class="agent">
+                <h3>Claude Code</h3>
+                <p><a class="ext" href="https://code.claude.com/docs/en/overview" target="_blank" rel="noopener">docs</a> · <a class="ext" href="https://docs.anthropic.com/en/docs/claude-code/setup" target="_blank" rel="noopener">setup</a></p>
+                <pre style="margin:0.5rem 0 0;">curl -fsSL https://claude.ai/install.sh | bash
+cd /Users/rifaterdemsahin/projects/chroma-keyer
+claude</pre>
+            </div>
+            <div class="agent">
+                <h3>Antigravity (agy)</h3>
+                <p><a class="ext" href="https://antigravity.google/download/" target="_blank" rel="noopener">download</a> · <a class="ext" href="https://antigravity.google/" target="_blank" rel="noopener">product</a></p>
+                <pre style="margin:0.5rem 0 0;">curl -fsSL https://antigravity.google/cli/install.sh | bash
+# or open the folder in Antigravity Manager
+# set Terminal to Always Proceed (Turbo)</pre>
+            </div>
+        </div>
+
+        <h3>Monitor prompt (paste into Grok / Claude / agy)</h3>
+<pre>In chroma-keyer, you are the operator. Do not use the GitHub Pages UI.
+
+1. cd /Users/rifaterdemsahin/projects/chroma-keyer
+2. Confirm ffmpeg and Pillow. Install if missing (brew install ffmpeg; pip3 install pillow).
+3. If I drop a clip, run:
+     python3 autocrop_rvm.py PATH_TO_CLIP.mp4
+   To sit on the inbox:
+     python3 autocrop_rvm.py --watch
+   (watches input/ for new .mp4/.mov)
+4. Keep original audio. Keep full color. Remove the green to transparent alpha.
+   Unique filename under output/. Never overwrite. Never write a B/W matte.
+5. Monitor the job: tail stdout and logs/process_*.log. Report FPS, speed, failures.
+6. When done, print the unique output/keyed_*.webm path and the log path.
+7. Optional local preview (local libraries, not the internet):
+     python3 serve.py
+   then http://127.0.0.1:8876/output/ and /logs/
+8. Canva project: https://canva.link/feekl13cfrcl5y5
+   Upload the .webm → timeline. Unmute if needed.</pre>
+
+        <div class="callout">
+            <p style="margin:0;">Let the agent auto-approve terminal commands for this repo. The keyer never needs a browser. The agent’s job is to <strong>run and monitor</strong>, not to click the static site.</p>
+        </div>
 
         <hr>
 
-        <h2>2. Run it yourself from the command prompt</h2>
-        <ol class="steps">
-            <li>Put the green-screen clip in this folder, or pass its path.</li>
-            <li>Run the script. Do not overwrite previous exports — each run creates a new filename.</li>
-            <li>Watch stdout for crop bounds, encode FPS, and the final output path.</li>
-        </ol>
-<pre>cd /Users/rifaterdemsahin/projects/chroma-keyer
+        <h2>2. Localhost servers and libraries</h2>
+        <p>Use this only if you want to glance at docs or play a keyed file. Bind loopback so the page can load <code>output/</code>, <code>logs/</code>, and <code>demo/</code> — those are local libraries, not GitHub Pages.</p>
+<pre>python3 serve.py
+python3 serve.py --open          # Google Chrome → process.html
+# If 8876 is busy, the script prints the next free 127.0.0.1 port.</pre>
+        <table>
+            <thead>
+                <tr><th>What</th><th>Local URL</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>This process page</td><td><a class="ext" href="http://127.0.0.1:8876/process.html">http://127.0.0.1:8876/process.html</a></td></tr>
+                <tr><td>Keyed player</td><td><a class="ext" href="http://127.0.0.1:8876/output.html">http://127.0.0.1:8876/output.html</a></td></tr>
+                <tr><td>Output library (unique .webm)</td><td><a class="ext" href="http://127.0.0.1:8876/output/">http://127.0.0.1:8876/output/</a></td></tr>
+                <tr><td>Demo clip checked into git</td><td><a class="ext" href="http://127.0.0.1:8876/demo/">http://127.0.0.1:8876/demo/</a></td></tr>
+                <tr><td>Process + performance logs</td><td><a class="ext" href="http://127.0.0.1:8876/logs/">http://127.0.0.1:8876/logs/</a></td></tr>
+                <tr><td>Inbox for --watch</td><td><a class="ext" href="http://127.0.0.1:8876/input/">http://127.0.0.1:8876/input/</a></td></tr>
+            </tbody>
+        </table>
+        <p>Binaries the agent uses on this Mac: <code>/opt/homebrew/bin/ffmpeg</code>, <code>/opt/homebrew/bin/python3</code>, Pillow. Optional RVM: PyTorch MPS.</p>
+        <p>GitHub Pages (<a class="ext" href="https://rifaterdemsahin.github.io/chroma-keyer/">rifaterdemsahin.github.io/chroma-keyer</a>) is a public snapshot. It cannot see new files in <code>output/</code> until they are committed. Day-to-day: localhost + agent.</p>
 
-# Uses the sample clip if present, otherwise the newest .mp4/.mov in ./input or .
+        <hr>
+
+        <h2>3. One-shot from the command prompt</h2>
+        <p>Same commands the agent runs. You rarely need this if Grok/Claude/agy is already watching.</p>
+<pre>cd /Users/rifaterdemsahin/projects/chroma-keyer
 python3 autocrop_rvm.py
-
-# Or point at any clip
 python3 autocrop_rvm.py /path/to/your-greenscreen.mp4
-
-# Optional: neural matting instead of chromakey (needs PyTorch)
-python3 autocrop_rvm.py --engine rvm your-clip.mp4</pre>
-        <p>Outputs land in <code>output/</code>. Logs land in <code>logs/</code>.</p>
+python3 autocrop_rvm.py --watch              # sit on input/
+python3 autocrop_rvm.py --engine rvm clip.mp4</pre>
+        <p>Each run writes:</p>
 <pre>output/keyed_&lt;clip&gt;_&lt;YYYYMMDD_HHMMSS&gt;_&lt;id&gt;.webm
 logs/process_&lt;YYYYMMDD_HHMMSS&gt;_&lt;id&gt;.log</pre>
 
         <hr>
 
-        <h2>3. Ask an AI agent to run it</h2>
-        <p>Open this repo in Grok Build, Claude Code, Cursor, or Google Antigravity. Paste this into the agent prompt (or type it at the command-prompt agent):</p>
-<pre>In the chroma-keyer repo, run the green-screen keyer from the command prompt.
-
-Use: python3 autocrop_rvm.py
-(or python3 autocrop_rvm.py PATH_TO_CLIP.mp4)
-
-Requirements:
-- Keep original audio on the output.
-- Keep the subject in full color. Do not export a black-and-white alpha matte.
-- Remove the green background (transparent alpha).
-- Write a unique filename under output/ so nothing is overwritten.
-- Print performance and process logs (also save under logs/).
-- The file must be Canva-ready: VP9 WebM with yuva420p alpha + audio.</pre>
-        <div class="callout">
-            <p style="margin:0;"><strong>Agent tip:</strong> Set terminal command execution to auto-approve if you want unattended batch runs. The script only needs ffmpeg + Python; it does not open a browser.</p>
-        </div>
-
-        <hr>
-
-        <h2>4. What a good run looks like</h2>
-        <p>Stdout (and the matching log file) should show:</p>
-        <ul>
-            <li>Source size, FPS, duration, and whether audio was found</li>
-            <li>Auto-crop box locked to the green backdrop</li>
-            <li>Encode progress: frame count, elapsed time, speed (e.g. <code>2.1x</code>)</li>
-            <li>A <strong>RUN SUMMARY</strong> with the unique output path</li>
-        </ul>
+        <h2>4. What the agent should see</h2>
 <pre>========== RUN SUMMARY ==========
-Run ID     : 20260912_143015_a1b2c3d4
+Run ID     : 20260912_090050_1af08980
 Engine     : chromakey
-Output     : output/keyed_clip_20260912_143015_a1b2c3d4.webm
-Format     : VP9 WebM + alpha (yuva420p)
-Audio      : opus (source audio preserved)
-Color      : full color subject — green background removed
-Elapsed    : 18.40s
-Log        : logs/process_20260912_143015_a1b2c3d4.log
+Output     : output/keyed_….webm
+Format     : VP9 WebM + alpha (alpha_mode=1)
+Audio      : opus
+Elapsed    : 42s   ~36 fps
+Log        : logs/process_….log
 =================================</pre>
+        <p>If encode speed sticks at <code>0x</code> or ffmpeg exits non-zero, the agent stops, pastes the log tail, and does not claim success.</p>
 
         <hr>
 
-        <h2>5. Drop it into Canva</h2>
+        <h2>5. Canva (after the agent finishes)</h2>
+        <p>Project: <a class="ext" href="https://canva.link/feekl13cfrcl5y5" target="_blank" rel="noopener">https://canva.link/feekl13cfrcl5y5</a></p>
         <ol class="steps">
-            <li>Open a Canva <strong>Video</strong> project.</li>
-            <li><strong>Uploads → Upload files</strong> and choose the unique <code>.webm</code> from <code>output/</code>.</li>
-            <li>Drag it onto the timeline. The green is already gone; the checkerboard/transparent areas let your Canva background, slides, or B-roll show through.</li>
-            <li>Sound is already on the clip — unmute the track if Canva starts it quiet.</li>
+            <li>Take the unique <code>.webm</code> from <code>output/</code> (or <a class="ext" href="http://127.0.0.1:8876/output/">localhost output library</a>).</li>
+            <li>Canva → <strong>Uploads → Upload files</strong> → drop on the timeline.</li>
+            <li>Background / slides go <em>under</em> this clip. Unmute if Canva starts it quiet.</li>
         </ol>
-        <p>Canva accepts WEBM up to 1 GB. This encoder uses VP9 with an alpha plane (<code>yuva420p</code>) plus Opus audio, which is the usual “transparent video + sound” package for web editors. The keyed clip and the Canva project walkthrough are on <a href="output.html" style="color:#38bdf8;">Output</a>.</p>
+        <p>Walkthrough with the last keyed file: <a class="ext" href="output.html">output.html</a>.</p>
 
         <hr>
 
         <h2>6. Optional flags</h2>
 <pre>python3 autocrop_rvm.py clip.mp4 --similarity 0.10 --blend 0.04 --padding 16
-python3 autocrop_rvm.py clip.mp4 --engine rvm</pre>
+python3 autocrop_rvm.py --watch input</pre>
         <ul>
-            <li><code>--similarity</code> / <code>--blend</code> — loosen or tighten the green key if a halo remains.</li>
-            <li><code>--padding</code> — extra pixels around the auto-crop box.</li>
-            <li><code>--engine rvm</code> — Apple Silicon MPS neural matte (person-shaped; may drop props like a mic).</li>
+            <li><code>--watch</code> — agent monitor loop on the inbox.</li>
+            <li><code>--similarity</code> / <code>--blend</code> — key tightness.</li>
+            <li><code>--padding</code> — inset of the green crop box.</li>
+            <li><code>--engine rvm</code> — neural matte (may drop the mic).</li>
         </ul>
     </div>
 </body>
