@@ -1,0 +1,6 @@
+output_alpha.mp4
+venv/
+venv_new/
+__pycache__/
+*.mp4
+*.mov
