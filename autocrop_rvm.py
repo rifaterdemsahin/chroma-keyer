@@ -520,6 +520,15 @@ def process_clip(input_path: Path, args: argparse.Namespace) -> int:
         print(f"Log        : {names['log']}")
         print("Canva      : Uploads → Upload files → drop the .webm on the video timeline")
         print("=================================")
+        logger.info("starting agent QA")
+        from qa import qa_clip
+
+        qa_ok, qa_log, _ = qa_clip(names["webm"])
+        logger.info(f"QA {'PASS' if qa_ok else 'FAIL'} log={qa_log}")
+        print(f"QA         : {'PASS' if qa_ok else 'FAIL'}  {qa_log}")
+        if not qa_ok:
+            logger.info("QA failed — do not send this file to Canva")
+            return 1
         return 0
     except Exception as exc:
         logger.info(f"FAILED {type(exc).__name__}: {exc}")

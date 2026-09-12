@@ -41,14 +41,14 @@
     </div>
 
     <div class="container">
-        <p><span class="badge">Agent-first · localhost libraries</span></p>
+        <p><span class="badge">Agent-first · QA gated · localhost libraries</span></p>
         <h1>How to run this project</h1>
-        <p>This is a <strong>terminal job</strong>. The usual way is an AI agent — <strong>Grok</strong>, <strong>Claude</strong>, or <strong>Antigravity (agy)</strong> — that launches the keyer, watches the log, and reports the unique output path. The HTML pages are optional docs. If you open them at all, use <strong>localhost</strong> so the browser can reach local clips, logs, and libraries. Do not depend on GitHub Pages for day-to-day work.</p>
+        <p>This is a <strong>terminal job</strong>. An AI agent — <strong>Grok</strong>, <strong>Claude</strong>, or <strong>Antigravity (agy)</strong> — <strong>runs the keyer and then quality-assures the file</strong> before anything goes to Canva. The HTML pages are optional docs. If you open them at all, use <strong>localhost</strong> so the browser can reach local clips, logs, and libraries. Do not depend on GitHub Pages for day-to-day work.</p>
 
         <hr>
 
         <h2>1. Agents (default)</h2>
-        <p>Open this repo in the agent. It already has <code>AGENTS.md</code>. Paste the monitor prompt below, or just say “watch input and key new clips.”</p>
+        <p>Open this repo in the agent. It already has <code>AGENTS.md</code>. The agent both <strong>operates</strong> the encode and <strong>QAs</strong> the result. Paste the monitor prompt below, or say “watch input, key new clips, and QA them.”</p>
 
         <div class="agents">
             <div class="agent">
@@ -87,15 +87,25 @@ claude</pre>
 4. Keep original audio. Keep full color. Remove the green to transparent alpha.
    Unique filename under output/. Never overwrite. Never write a B/W matte.
 5. Monitor the job: tail stdout and logs/process_*.log. Report FPS, speed, failures.
-6. When done, print the unique output/keyed_*.webm path and the log path.
-7. Optional local preview (local libraries, not the internet):
+6. Quality assurance (required, do not skip):
+     python3 qa.py
+     python3 qa.py PATH_TO_KEYED.webm
+   Encode already calls qa.py. Re-run it yourself and read logs/qa_*.log.
+   Inspect the sampled PNGs (logs/qa_*_t0.png …). Confirm:
+     - corners transparent (not green, not black fill)
+     - subject still in COLOR (not a grayscale matte)
+     - mic/person not keyed out
+     - audio present
+   FAIL ⇒ do not upload to Canva. Fix flags or crop and re-run.
+7. When QA PASSES, print the unique output/keyed_*.webm path, process log, and QA log.
+8. Optional local preview:
      python3 serve.py
    then http://127.0.0.1:8876/output/ and /logs/
-8. Canva project: https://canva.link/feekl13cfrcl5y5
-   Upload the .webm → timeline. Unmute if needed.</pre>
+9. Canva project: https://canva.link/feekl13cfrcl5y5
+   Upload only QA-PASS files → timeline. Unmute if needed.</pre>
 
         <div class="callout">
-            <p style="margin:0;">Let the agent auto-approve terminal commands for this repo. The keyer never needs a browser. The agent’s job is to <strong>run and monitor</strong>, not to click the static site.</p>
+            <p style="margin:0;">Let the agent auto-approve terminal commands for this repo. The keyer never needs a browser. The agent’s job is to <strong>run, monitor, and QA</strong> — a PASS from <code>qa.py</code> is the gate to Canva.</p>
         </div>
 
         <hr>
@@ -136,7 +146,37 @@ logs/process_&lt;YYYYMMDD_HHMMSS&gt;_&lt;id&gt;.log</pre>
 
         <hr>
 
-        <h2>4. What the agent should see</h2>
+        <h2>4. Agent QA (required gate)</h2>
+        <p>Every encode is quality-assured by the same class of agent that ran it (Grok, Claude, or agy). <code>autocrop_rvm.py</code> already calls <code>qa.py</code>. The agent must still read the report and look at the sampled frames. <strong>No QA PASS → no Canva upload.</strong></p>
+<pre>python3 qa.py
+python3 qa.py output/keyed_….webm</pre>
+        <table>
+            <thead>
+                <tr><th>Check</th><th>Pass means</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>audio</code></td><td>Opus (or other) soundtrack is on the file — not silent</td></tr>
+                <tr><td><code>alpha</code></td><td><code>alpha_mode=1</code> so Canva can see through the old green</td></tr>
+                <tr><td><code>codec</code></td><td>VP9 WebM, not a black-and-white matte movie</td></tr>
+                <tr><td><code>corners-transparent</code></td><td>Backdrop is gone (checkerboard / Canva layer shows)</td></tr>
+                <tr><td><code>subject-present</code></td><td>Person and mic were not keyed out</td></tr>
+                <tr><td><code>color-not-grayscale</code></td><td>Subject is in color</td></tr>
+                <tr><td><code>green-gone</code></td><td>Opaque pixels are not leftover green screen</td></tr>
+            </tbody>
+        </table>
+        <p>Reports land in <code>logs/qa_*.log</code> plus PNG samples <code>logs/qa_*_t0.png</code> … <code>t2.png</code>. On FAIL the agent re-runs with tighter/looser <code>--similarity</code> / <code>--padding</code> and QAs again.</p>
+        <p>Example from the checked-in clip:</p>
+<pre>PASS audio: opus ch=2
+PASS alpha: alpha_mode=1 codec=vp9
+PASS corners-transparent: mean corner alpha=0.0
+PASS subject-present: interior opaque=0.68
+PASS color-not-grayscale: chroma=48
+PASS green-gone: 0.0%
+RESULT PASS</pre>
+
+        <hr>
+
+        <h2>5. What the agent should see</h2>
 <pre>========== RUN SUMMARY ==========
 Run ID     : 20260912_090050_1af08980
 Engine     : chromakey
@@ -150,7 +190,7 @@ Log        : logs/process_….log
 
         <hr>
 
-        <h2>5. Canva (after the agent finishes)</h2>
+        <h2>6. Canva (only after QA PASS)</h2>
         <p>Project: <a class="ext" href="https://canva.link/feekl13cfrcl5y5" target="_blank" rel="noopener">https://canva.link/feekl13cfrcl5y5</a></p>
         <ol class="steps">
             <li>Take the unique <code>.webm</code> from <code>output/</code> (or <a class="ext" href="http://127.0.0.1:8876/output/">localhost output library</a>).</li>
@@ -161,7 +201,7 @@ Log        : logs/process_….log
 
         <hr>
 
-        <h2>6. Optional flags</h2>
+        <h2>7. Optional flags</h2>
 <pre>python3 autocrop_rvm.py clip.mp4 --similarity 0.10 --blend 0.04 --padding 16
 python3 autocrop_rvm.py --watch input</pre>
         <ul>

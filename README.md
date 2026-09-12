@@ -1,7 +1,7 @@
 # chroma-keyer
 Clean green screen with code using AI on Apple Silicon.
 
-**Default:** a terminal AI agent (Grok, Claude, Antigravity/agy) runs and monitors the keyer. The HTML site is optional docs. If you open the docs at all, use **localhost** so the browser can reach local `output/` and `logs/` — not GitHub Pages.
+**Default:** a terminal AI agent (Grok, Claude, Antigravity/agy) **runs the keyer and QAs the file**. Nothing goes to Canva until `python3 qa.py` reports PASS. The HTML site is optional docs. If you open the docs at all, use **localhost** so the browser can reach local `output/` and `logs/` — not GitHub Pages.
 
 ## Agents
 | Agent | Install | In this repo |
@@ -13,8 +13,9 @@ Clean green screen with code using AI on Apple Silicon.
 Paste the monitor prompt from [process.html](process.html). Repo instructions for agents: [AGENTS.md](AGENTS.md).
 
 ```bash
-python3 autocrop_rvm.py --watch          # monitor input/
-python3 autocrop_rvm.py clip.mp4         # one file
+python3 autocrop_rvm.py --watch          # monitor input/ (QA each clip)
+python3 autocrop_rvm.py clip.mp4         # one file + automatic QA
+python3 qa.py                            # re-check newest keyed WebM
 python3 serve.py                         # http://127.0.0.1:8876/ (local libraries)
 ```
 
@@ -37,8 +38,11 @@ output/keyed_<clip>_<timestamp>_<id>.webm
 logs/process_<timestamp>_<id>.log
 ```
 
+## QA
+`python3 qa.py` (also runs at the end of every encode). Agents must treat FAIL as “not Canva-ready.”
+
 ## Canva
-Project: https://canva.link/feekl13cfrcl5y5 — Uploads → drop the `.webm` on the timeline.
+Project: https://canva.link/feekl13cfrcl5y5 — upload **QA-PASS** `.webm` only.
 
 ## Engines
 - Default: ffmpeg chromakey + despill after auto-crop.

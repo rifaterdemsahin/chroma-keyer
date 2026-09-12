@@ -31,9 +31,10 @@
 
     <div class="container">
         <h1>M1 Mac AI Green Screen Keyer</h1>
-        <p>Run this with a terminal agent (Grok, Claude, Antigravity/agy) that keys clips and monitors logs. The HTML is optional; if you open it, use localhost so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
+        <p>Run this with a terminal agent (Grok, Claude, Antigravity/agy) that keys clips, monitors logs, and <strong>QAs the file</strong> before Canva. The HTML is optional; if you open it, use localhost so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
 <pre>grok          # or: claude    # or: Antigravity / agy
 python3 autocrop_rvm.py --watch
+python3 qa.py                # required gate (also runs after encode)
 python3 serve.py --open      # optional: http://127.0.0.1:8876/</pre>
         <button class="action-btn" onclick="window.location.href='process.html'">Agent process + localhost</button>
         <button class="action-btn secondary" onclick="window.location.href='output.html'">Keyed output</button>

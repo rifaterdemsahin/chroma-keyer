@@ -41,6 +41,7 @@
 
         <h2>Agent-first + localhost libraries</h2>
         <p>Day-to-day run is <strong>Grok / Claude / Antigravity (agy)</strong> in the terminal, not the GitHub Pages UI. <code>AGENTS.md</code> plus <code>python3 autocrop_rvm.py --watch</code> let the agent monitor <code>input/</code>. Optional docs server: <code>python3 serve.py</code> → <a href="http://127.0.0.1:8876/process.html" style="color:#38bdf8;">http://127.0.0.1:8876/process.html</a> so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
+        <p>The same agents <strong>quality-assure</strong> every file: <code>python3 qa.py</code> checks audio, alpha, color (not B/W), subject still there, and green gone. Encode already runs QA. <strong>PASS is the gate to Canva.</strong></p>
 
         <hr>
 
