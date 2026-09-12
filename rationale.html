@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rationale | M1 AI Keyer</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; line-height: 1.6; }
+        .container { max-width: 800px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h1, h2, h3 { color: #f1f5f9; margin-top: 0; }
+        p, li { color: #94a3b8; font-size: 1rem; }
+        .nav-menu { display: flex; justify-content: center; gap: 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.1rem; transition: color 0.2s; }
+        .nav-menu a:hover { color: var(--accent); }
+        hr { border: 0; height: 1px; background: #334155; margin: 2rem 0; }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <a href="index.html">🏠 Home</a>
+        <a href="process.html">⚙️ Processor</a>
+        <a href="rationale.html">🧠 Rationale</a>
+    </div>
+
+    <div class="container">
+        <h2>Why External Pre-Processing?</h2>
+        <p>This local "divide and conquer" workflow works better than keeping everything inside DaVinci Resolve for several key technical reasons—especially on an M1 Mac Mini.</p>
+
+        <hr>
+
+        <h3>1. Eliminates Resolve Timeline GPU Throttling</h3>
+        <p>When you run Resolve’s built-in 3D Keyer, Delta Keyer, or Magic Mask directly on the timeline, Resolve re-calculates or pulls that mask <strong>every single frame</strong> you scrub, edit, or play back.</p>
+        <ul>
+            <li><strong>The Resolve Bottleneck:</strong> On an M1 Mac Mini, running complex AI spatial/temporal neural networks while Resolve renders color nodes, audio playback, and timeline UI often forces the system down to <strong>1–5 FPS</strong>.</li>
+            <li><strong>The Offload Solution:</strong> By batch-processing the alpha mask externally to a static file (PNG/EXR sequence or ProRes alpha video), DaVinci Resolve treats the mask as simple video data. Playback instantly locks back to a smooth 24/30 FPS with near-zero GPU load.</li>
+        </ul>
+
+        <hr>
+
+        <h3>2. Purpose-Built AI vs. Broad-Purpose Rotoscoping</h3>
+        <p>DaVinci Resolve’s <strong>Magic Mask</strong> is an all-purpose object segmenter (designed to catch people, cars, objects, and foregrounds across complex scenes).</p>
+        <ul>
+            <li>Specialized matting models like <strong>Robust Video Matting (RVM)</strong> are explicitly trained for human-over-background video matting.</li>
+            <li>RVM uses <strong>recurrent neural networks (RNNs)</strong> to remember temporal continuity across frames. This eliminates the flickering or edge "chatter" around fine hair strands, fingers, and motion-blurred edges that often plague Resolve keyers.</li>
+        </ul>
+
+        <hr>
+
+        <h3>3. Solves the "Garbage Matte" Problem Programmatically</h3>
+        <p>In DaVinci Resolve, removing room clutter (like your side curtains, artwork, or wall edges) requires manually drawing power windows, keyframing garbage mattes, or setting up complex Fusion nodes.</p>
+        <ul>
+            <li>Doing this programmatic crop <strong>before AI inference</strong> crops away the noise first.</li>
+            <li>The AI engine only processes the clean green bounds, reducing frame resolution fed to the neural network. This slashes VRAM usage and speeds up processing time dramatically.</li>
+        </ul>
+
+        <hr>
+
+        <h3>4. Apple Silicon MPS & Neural Engine Utilization</h3>
+        <p>When running RVM via Python or WebGPU, execution targets the <strong>Metal Performance Shaders (MPS)</strong> framework directly on your M1 chip.</p>
+        <ul>
+            <li>It bypasses the massive VRAM overhead of DaVinci Resolve’s full rendering engine.</li>
+            <li>Dedicated scripts leverage FP16 half-precision tensor execution, allowing your M1 Mini to process batch renders at or near real-time speeds without running out of unified memory.</li>
+        </ul>
+    </div>
+</body>
+</html>

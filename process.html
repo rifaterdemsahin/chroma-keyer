@@ -12,6 +12,9 @@
         .panel { background: #1e293b; padding: 1rem; border-radius: 8px; border: 1px solid #334155; }
         canvas { width: 100%; height: auto; background: #000; border-radius: 4px; display: block; }
         video { display: none; }
+        .nav-menu { display: flex; justify-content: center; gap: 20px; padding: 1rem; margin-bottom: 2rem; background: #1e293b; border-radius: 8px; border: 1px solid #334155; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .nav-menu a { color: #f8fafc; text-decoration: none; font-weight: 500; font-size: 1.1rem; transition: color 0.2s; }
+        .nav-menu a:hover { color: #38bdf8; }
     </style>
     <script type="module">
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
@@ -123,6 +126,12 @@
     </script>
 </head>
 <body>
+    <div class="nav-menu">
+        <a href="index.html">🏠 Home</a>
+        <a href="process.html">⚙️ Processor</a>
+        <a href="rationale.html">🧠 Rationale</a>
+    </div>
+
     <div class="header">
         <h2>Local M1 WebGPU Execution Workspace</h2>
         <div class="status-badge" id="status">Analyzing Initial Frame...</div>

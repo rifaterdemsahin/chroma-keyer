@@ -16,9 +16,18 @@
         label.upload-btn:hover { background: #475569; }
         .action-btn { width: 100%; background: var(--accent); color: #0f172a; border: none; padding: 0.8rem; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
         .action-btn:hover { opacity: 0.9; }
+        .nav-menu { display: flex; justify-content: center; gap: 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.1rem; transition: color 0.2s; }
+        .nav-menu a:hover { color: var(--accent); }
     </style>
 </head>
 <body>
+    <div class="nav-menu">
+        <a href="index.html">🏠 Home</a>
+        <a href="process.html">⚙️ Processor</a>
+        <a href="rationale.html">🧠 Rationale</a>
+    </div>
+
     <div class="container">
         <h1>M1 Mac AI Green Screen Keyer</h1>
         <p>Pre-crop footage bounds and calculate AI alpha mattes 100% locally using Metal WebGPU.</p>
