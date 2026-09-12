@@ -7,13 +7,20 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; line-height: 1.6; }
-        .container { max-width: 800px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        .container { max-width: 920px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
         h1, h2, h3 { color: #f1f5f9; margin-top: 0; }
         p, li { color: #94a3b8; font-size: 1rem; }
         .nav-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 840px; margin-left: auto; margin-right: auto; }
         .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.1rem; transition: color 0.2s; }
-        .nav-menu a:hover { color: var(--accent); }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--accent); }
         hr { border: 0; height: 1px; background: #334155; margin: 2rem 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1.2rem 0 0; }
+        th, td { text-align: left; padding: 0.7rem 0.75rem; border-bottom: 1px solid #334155; color: #cbd5e1; font-size: 0.92rem; vertical-align: top; }
+        th { color: #94a3b8; font-weight: 600; background: #0f172a; }
+        th:nth-child(3), td:nth-child(3) { color: #7dd3fc; }
+        .win { color: #34d399; font-weight: 600; }
+        .lose { color: #f87171; }
+        .ok { background: #064e3b; color: #34d399; display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -23,13 +30,78 @@
         <a href="output.html">🎬 Output</a>
         <a href="canva.html">🎨 Canva</a>
         <a href="update.html">📰 Update</a>
-        <a href="rationale.html">🧠 Rationale</a>
+        <a href="rationale.html" class="active">🧠 Rationale</a>
         <a href="sanity.html">✅ Sanity Check</a>
     </div>
 
     <div class="container">
+        <p><span class="ok">✅ This way vs DaVinci on an M1</span></p>
         <h2>🧠 Why External Pre-Processing?</h2>
-        <p>This local "divide and conquer" workflow works better than keeping everything inside DaVinci Resolve for several key technical reasons—especially on an M1 Mac Mini.</p>
+        <p>This local “divide and conquer” workflow works better than keeping the key inside DaVinci Resolve — especially on an M1 Mac Mini. You still <em>can</em> finish in Resolve; you just do not make Resolve compute the key on every playhead move.</p>
+
+        <h3>📊 DaVinci Resolve vs this way</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Topic</th>
+                    <th>🎬 DaVinci Resolve (key on the timeline)</th>
+                    <th>🟩 This way (chroma-keyer + agent + Canva)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Where the key runs</td>
+                    <td class="lose">3D Keyer / Delta / Magic Mask recalculates every frame you scrub or play</td>
+                    <td class="win">Once, in a batch Python + ffmpeg job. Timeline only reads a finished file</td>
+                </tr>
+                <tr>
+                    <td>Playback on M1 Mini</td>
+                    <td class="lose">Often 1–5 FPS with AI mask + color + UI together</td>
+                    <td class="win">Locked 24/30 FPS in Canva or Resolve — the hard work is already done</td>
+                </tr>
+                <tr>
+                    <td>GPU / unified memory</td>
+                    <td class="lose">Resolve GUI + color engine + Magic Mask fight for the same M1 RAM</td>
+                    <td class="win">Dedicated ffmpeg/MPS pass, then a tiny playback footprint</td>
+                </tr>
+                <tr>
+                    <td>Room / garbage matte</td>
+                    <td class="lose">Manual power windows, Fusion, keyframes around curtains and photos</td>
+                    <td class="win">Auto-crop to the green backdrop, then chromakey — room never enters the plate</td>
+                </tr>
+                <tr>
+                    <td>What you export</td>
+                    <td>Usually a separate B/W matte track you must relink in Resolve</td>
+                    <td class="win">One color WebM: subject + 🔊 audio + 🪄 transparent alpha, unique filename</td>
+                </tr>
+                <tr>
+                    <td>Audio</td>
+                    <td>Stays on the original clip; matte itself is silent</td>
+                    <td class="win">Original soundtrack muxed onto the keyed file (Opus)</td>
+                </tr>
+                <tr>
+                    <td>Who runs it</td>
+                    <td>You click nodes in the GUI every session</td>
+                    <td class="win">🤖 Grok / Claude / agy runs, monitors, and QAs from the terminal</td>
+                </tr>
+                <tr>
+                    <td>Quality gate</td>
+                    <td>Eyeball the timeline</td>
+                    <td class="win"><code>qa.py</code> PASS required: audio, alpha, color, subject, green gone</td>
+                </tr>
+                <tr>
+                    <td>Edit destination</td>
+                    <td>Resolve timeline (heavy)</td>
+                    <td class="win">🎨 Drop into Canva (watch example on the Canva page) — or still import to Resolve as a plate</td>
+                </tr>
+                <tr>
+                    <td>Best use</td>
+                    <td>Final color, titles, long-form NLE finishing</td>
+                    <td class="win">Green-screen talking-head → Canva-ready overlay, fast and repeatable</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>Use Resolve when you need its color page. Use this repo when you want a keyed, Canva-ready clip without melting the M1 on Magic Mask.</p>
 
         <hr>
 
