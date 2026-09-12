@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Canva example | M1 AI Keyer</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; line-height: 1.6; }
+        .container { max-width: 960px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h1, h2 { color: #f1f5f9; margin-top: 0; }
+        p, li { color: #94a3b8; font-size: 1rem; }
+        .nav-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 920px; margin-left: auto; margin-right: auto; }
+        .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.05rem; }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--accent); }
+        hr { border: 0; height: 1px; background: #334155; margin: 2rem 0; }
+        .badge { display: inline-block; background: #0284c7; color: white; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; }
+        .ok { background: #064e3b; color: #34d399; display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
+        .embed-wrap { position: relative; width: 100%; padding-top: 56.25%; background: #0f172a; border-radius: 10px; overflow: hidden; border: 1px solid #334155; }
+        .embed-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+        .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+        .btn { display: inline-block; background: var(--accent); color: #0f172a; text-decoration: none; font-weight: 700; padding: 0.7rem 1.1rem; border-radius: 6px; }
+        .btn.secondary { background: #334155; color: #f8fafc; }
+        .btn:hover { opacity: 0.9; }
+        a.ext { color: #38bdf8; word-break: break-all; }
+        ol.steps li { margin-bottom: 0.6rem; }
+        .callout { background: #0f172a; border-left: 3px solid var(--accent); padding: 0.9rem 1.1rem; border-radius: 6px; }
+        code { color: #7dd3fc; }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <a href="index.html">🏠 Home</a>
+        <a href="process.html">⚙️ Process</a>
+        <a href="output.html">🎬 Output</a>
+        <a href="canva.html" class="active">🎨 Canva</a>
+        <a href="update.html">📰 Update</a>
+        <a href="rationale.html">🧠 Rationale</a>
+        <a href="sanity.html">✅ Sanity Check</a>
+    </div>
+
+    <div class="container">
+        <p><span class="ok">✅ Example: keyed WebM in Canva</span></p>
+        <h1>🎨 Canva example</h1>
+        <p>This is the live Canva video after the keyed clip was dropped on the timeline. Green is gone; the Canva background shows through. Sound is on the file.</p>
+
+        <div class="embed-wrap">
+            <iframe
+                title="Canva watch example"
+                src="https://www.canva.com/design/DAHU9z8CF4o/82EUTrCww6ESWoxr-C40ow/watch?embed"
+                allowfullscreen
+                allow="fullscreen; autoplay; clipboard-write"
+                loading="lazy"></iframe>
+        </div>
+
+        <div class="actions">
+            <a class="btn" href="https://www.canva.com/design/DAHU9z8CF4o/82EUTrCww6ESWoxr-C40ow/watch" target="_blank" rel="noopener">▶️ Watch in Canva</a>
+            <a class="btn secondary" href="https://canva.link/feekl13cfrcl5y5" target="_blank" rel="noopener">✏️ Edit in Canva</a>
+            <a class="btn secondary" href="output.html">🎬 Local keyed WebM</a>
+        </div>
+
+        <p style="margin-top:1.2rem;">Watch URL:<br>
+        <a class="ext" href="https://www.canva.com/design/DAHU9z8CF4o/82EUTrCww6ESWoxr-C40ow/watch" target="_blank" rel="noopener">https://www.canva.com/design/DAHU9z8CF4o/82EUTrCww6ESWoxr-C40ow/watch</a></p>
+
+        <hr>
+
+        <h2>How this example was made</h2>
+        <ol class="steps">
+            <li>🤖 Agent ran <code>python3 autocrop_rvm.py</code> and <code>python3 qa.py</code> — RESULT PASS.</li>
+            <li>🎬 Output: unique VP9 WebM, color + 🔊 audio + 🪄 transparent alpha.</li>
+            <li>🎨 Uploads → drop the <code>.webm</code> on the Canva timeline (background track underneath).</li>
+            <li>▶️ Share → watch link so anyone can play the result.</li>
+        </ol>
+
+        <div class="callout">
+            <p style="margin:0;">If the embed is blank, open <strong>Watch in Canva</strong> (Canva sometimes blocks iframes until you are signed in). The keyed file itself is on <a class="ext" href="output.html">output.html</a>.</p>
+        </div>
+    </div>
+</body>
+</html>

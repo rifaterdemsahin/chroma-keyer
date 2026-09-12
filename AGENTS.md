@@ -51,3 +51,5 @@ Exit code 1 = FAIL. Do not tell the user the clip is Canva-ready unless RESULT i
 ## Canva
 
 Upload **only QA-PASS** `.webm` files to https://canva.link/feekl13cfrcl5y5 (Uploads → timeline, unmute if needed).
+
+Watch example: https://www.canva.com/design/DAHU9z8CF4o/82EUTrCww6ESWoxr-C40ow/watch (also `canva.html`).
