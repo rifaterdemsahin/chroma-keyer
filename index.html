@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Chroma Keying</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; color: #333; }
+        .container { max-width: 1000px; margin: auto; }
+        .video-container { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        canvas, video { border: 1px solid #ccc; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        .card { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #4CAF50; }
+        button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-bottom: 20px; }
+        button:hover { background-color: #45a049; }
+        h1, h2, h3 { color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Automated Chroma Keying with HTML5 Canvas</h1>
+        
+        <p>This project implements an automated, browser-native green screen removal tool. It processes video footage in real-time, removing the green background without the need for complex, manual human intervention typically required in traditional NLE software.</p>
+
+        <button id="play-btn">Play Processing</button>
+
+        <div class="video-container">
+            <div>
+                <h3>Original Video</h3>
+                <video id="video" width="640" height="360" controls loop muted>
+                    <source src="2025-09-28-07-57.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div>
+                <h3>Chroma Key Output</h3>
+                <canvas id="output-canvas" width="640" height="360"></canvas>
+            </div>
+        </div>
+        
+        <!-- Hidden canvas for processing and hidden background image -->
+        <canvas id="buffer-canvas" width="640" height="360" class="hidden"></canvas>
+        <img id="background" src="background.png" crossorigin="anonymous" class="hidden">
+
+        <div class="card">
+            <h2>Process & Steps Followed</h2>
+            <ol>
+                <li><strong>Setup Video and Canvas:</strong> Loaded the video footage (<code>2025-09-28-07-57.mp4</code>) and a dynamically linked background image (<code>background.png</code>) into the Document Object Model (DOM).</li>
+                <li><strong>Divide and Conquer:</strong> Instead of processing the entire video file at once, the problem is divided frame-by-frame.</li>
+                <li><strong>Frame Extraction:</strong> Using <code>requestAnimationFrame</code>, we continually draw the current video frame onto a hidden buffer canvas.</li>
+                <li><strong>Pixel Analysis (Automation):</strong> We extract the <code>ImageData</code> (RGBA array) from the buffer canvas. We analyze each pixel to identify the background.</li>
+                <li><strong>Automated Green Detection:</strong> If the Green channel is significantly dominant over the Red and Blue channels (using a relative threshold formula), we classify the pixel as "green screen".</li>
+                <li><strong>Background Cropping & Substitution:</strong> For every green pixel, we crop it out by replacing its RGBA values with the corresponding pixel values from the background image, merging the footage and background seamlessly.</li>
+                <li><strong>Rendering:</strong> The modified pixel data is painted onto the visible output canvas, creating the final composite video stream.</li>
+            </ol>
+            <p><strong>Libraries Installed/Used:</strong> No external bloated libraries were necessary. We achieved this pure automation using standard, highly optimized Web APIs (HTML5 Canvas + JavaScript <code>ImageData</code>). This "divide and conquer" approach keeps the application lightweight and native, eliminating the need for large Node.js modules or OpenCV payloads.</p>
+        </div>
+
+        <div class="card">
+            <h2>Comparison with DaVinci Resolve</h2>
+            <p><strong>DaVinci Resolve (Delta Keyer / 3D Keyer):</strong></p>
+            <ul>
+                <li><em>Pros:</em> Highly advanced spill suppression, automated edge refinement, and professional-grade color math.</li>
+                <li><em>Cons:</em> As noted, it can have drawbacks when shadows and locations change. The "green key" often requires human intervention to tweak thresholds, clean plates, and adjust garbage mattes when the lighting shifts.</li>
+            </ul>
+            <p><strong>Our Automated Browser-based Keyer:</strong></p>
+            <ul>
+                <li><em>Pros:</em> Designed for <strong>zero human intervention</strong>. It dynamically processes relative color channels to crop the green out automatically. It runs entirely on the client side in the browser, meaning it's lightweight and instantly deployable.</li>
+                <li><em>Cons:</em> Pure RGB thresholding can struggle with very aggressive shadows or over-exposed highlights if the green loses its dominant hue, and it lacks the complex spill-suppression of DaVinci's node-based compositing.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Limitations</h2>
+            <ul>
+                <li><strong>Lighting Consistency:</strong> Extreme shadows might cause the green to become too dark, breaking the automated RGB threshold logic.</li>
+                <li><strong>Subject Colors:</strong> If the subject wears green or colors with very high green values, they may become transparent.</li>
+                <li><strong>Performance:</strong> CPU-based pixel manipulation in JavaScript is fast enough for standard resolutions, but for 4K 60FPS video, it may drop frames on lower-end devices. Future iterations could use WebGL shaders for GPU acceleration.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const outputCanvas = document.getElementById('output-canvas');
+        const bufferCanvas = document.getElementById('buffer-canvas');
+        const outputCtx = outputCanvas.getContext('2d', { willReadFrequently: true });
+        const bufferCtx = bufferCanvas.getContext('2d', { willReadFrequently: true });
+        const bgImg = document.getElementById('background');
+        const playBtn = document.getElementById('play-btn');
+
+        let bgData = null;
+
+        // Ensure background is loaded and scaled to fit the canvas
+        bgImg.onload = () => {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = outputCanvas.width;
+            tempCanvas.height = outputCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(bgImg, 0, 0, outputCanvas.width, outputCanvas.height);
+            bgData = tempCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height).data;
+        };
+        // Trigger load if already cached
+        if (bgImg.complete) bgImg.onload();
+
+        playBtn.addEventListener('click', () => {
+            if (video.paused) {
+                video.play();
+                playBtn.textContent = 'Pause Processing';
+                processFrame();
+            } else {
+                video.pause();
+                playBtn.textContent = 'Play Processing';
+            }
+        });
+
+        function processFrame() {
+            if (video.paused || video.ended) return;
+
+            // Draw video to buffer
+            bufferCtx.drawImage(video, 0, 0, bufferCanvas.width, bufferCanvas.height);
+            
+            // Get frame data
+            const frame = bufferCtx.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height);
+            const data = frame.data;
+            const length = data.length;
+
+            if (bgData) {
+                for (let i = 0; i < length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // Automated Green Detection logic
+                    // If green is significantly dominant, treat as background
+                    if (g > r * 1.2 && g > b * 1.2 && g > 50) {
+                        data[i] = bgData[i];         // R
+                        data[i + 1] = bgData[i + 1]; // G
+                        data[i + 2] = bgData[i + 2]; // B
+                        data[i + 3] = bgData[i + 3]; // Alpha
+                    }
+                }
+            }
+
+            outputCtx.putImageData(frame, 0, 0);
+            
+            requestAnimationFrame(processFrame);
+        }
+        
+        video.addEventListener('play', () => {
+            playBtn.textContent = 'Pause Processing';
+            processFrame();
+        });
+        video.addEventListener('pause', () => {
+            playBtn.textContent = 'Play Processing';
+        });
+    </script>
+</body>
+</html>
