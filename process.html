@@ -3,151 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processing Hub | M1 AI Keyer</title>
+    <title>Process | M1 AI Keyer</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; margin: 0; }
-        .header { text-align: center; margin-bottom: 2rem; }
-        .status-badge { background: #0284c7; color: white; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin-top: 0.5rem; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
-        .panel { background: #1e293b; padding: 1rem; border-radius: 8px; border: 1px solid #334155; }
-        canvas { width: 100%; height: auto; background: #000; border-radius: 4px; display: block; }
-        video { display: none; }
-        .nav-menu { display: flex; justify-content: center; gap: 20px; padding: 1rem; margin-bottom: 2rem; background: #1e293b; border-radius: 8px; border: 1px solid #334155; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .nav-menu a { color: #f8fafc; text-decoration: none; font-weight: 500; font-size: 1.1rem; transition: color 0.2s; }
-        .nav-menu a:hover { color: #38bdf8; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; line-height: 1.6; }
+        .container { max-width: 860px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h1, h2, h3 { color: #f1f5f9; margin-top: 0; }
+        p, li { color: #94a3b8; font-size: 1rem; }
+        .nav-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 720px; margin-left: auto; margin-right: auto; }
+        .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.05rem; }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--accent); }
+        hr { border: 0; height: 1px; background: #334155; margin: 2rem 0; }
+        pre { background: #0f172a; padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; color: #7dd3fc; font-size: 0.9rem; border: 1px solid #334155; }
+        code { color: #7dd3fc; }
+        .badge { display: inline-block; background: #0284c7; color: white; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; }
+        ol.steps li { margin-bottom: 0.6rem; }
+        .callout { background: #0f172a; border-left: 3px solid var(--accent); padding: 0.9rem 1.1rem; border-radius: 6px; }
     </style>
-    <script type="module">
-        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-        env.allowLocalModels = false;
-        env.useBrowserCache = true;
-
-        let videoElement, srcCanvas, alphaCanvas, sCtx, aCtx;
-        let crop = { xmin: 0, xmax: 0, ymin: 0, ymax: 0 };
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            const videoBlob = sessionStorage.getItem('activeVideoBlob');
-            if (!videoBlob) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            videoElement = document.getElementById('videoSource');
-            srcCanvas = document.getElementById('srcCanvas');
-            alphaCanvas = document.getElementById('alphaCanvas');
-            sCtx = srcCanvas.getContext('2d');
-            aCtx = alphaCanvas.getContext('2d');
-
-            videoElement.src = videoBlob;
-            videoElement.onloadedmetadata = () => {
-                videoElement.currentTime = 0.2; // Move frame forward to skip black introduction
-            };
-
-            videoElement.onseeked = () => {
-                runAutoCropAnalysis();
-                document.getElementById('status').innerText = "Crop limits applied. Initializing WebGPU Neural Engine...";
-                startMattingPipeline();
-            };
-        });
-
-        function runAutoCropAnalysis() {
-            srcCanvas.width = videoElement.videoWidth;
-            srcCanvas.height = videoElement.videoHeight;
-            sCtx.drawImage(videoElement, 0, 0);
-
-            const imgData = sCtx.getImageData(0, 0, videoElement.videoWidth, videoElement.videoHeight);
-            const pixels = imgData.data;
-
-            let minX = videoElement.videoWidth, maxX = 0, minY = videoElement.videoHeight, maxY = 0;
-
-            for (let i = 0; i < pixels.length; i += 4) {
-                const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
-                // Hue mask matching green screen bounds
-                if (g > 70 && g > r * 1.25 && g > b * 1.25) {
-                    const idx = i / 4;
-                    const x = idx % videoElement.videoWidth;
-                    const y = Math.floor(idx / videoElement.videoWidth);
-
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
-                }
-            }
-
-            crop = {
-                xmin: Math.max(0, minX - 15),
-                xmax: Math.min(videoElement.videoWidth, maxX + 15),
-                ymin: Math.max(0, minY - 15),
-                ymax: Math.min(videoElement.videoHeight, maxY + 15)
-            };
-
-            // Overlay crop bounding box
-            sCtx.strokeStyle = '#38bdf8';
-            sCtx.lineWidth = 4;
-            sCtx.strokeRect(crop.xmin, crop.ymin, crop.xmax - crop.xmin, crop.ymax - crop.ymin);
-        }
-
-        async function startMattingPipeline() {
-            try {
-                // Instantiates vision segmentation pipeline via M1 Metal WebGPU backend
-                const segmenter = await pipeline('image-segmentation', 'Xenova/birefnet-general', { device: 'webgpu' });
-                document.getElementById('status').innerText = "Processing Frames (WebGPU Active)";
-
-                alphaCanvas.width = crop.xmax - crop.xmin;
-                alphaCanvas.height = crop.ymax - crop.ymin;
-
-                videoElement.play();
-
-                async function renderFrame() {
-                    if (videoElement.paused || videoElement.ended) return;
-
-                    aCtx.drawImage(
-                        videoElement,
-                        crop.xmin, crop.ymin, alphaCanvas.width, alphaCanvas.height,
-                        0, 0, alphaCanvas.width, alphaCanvas.height
-                    );
-
-                    const frameBlob = alphaCanvas.toDataURL('image/png');
-                    const output = await segmenter(frameBlob);
-
-                    if (output && output[0]) {
-                        const maskCanvas = await output[0].mask.toCanvas();
-                        aCtx.drawImage(maskCanvas, 0, 0, alphaCanvas.width, alphaCanvas.height);
-                    }
-
-                    requestAnimationFrame(renderFrame);
-                }
-                renderFrame();
-            } catch (err) {
-                document.getElementById('status').innerText = "WebGPU error. Ensure Chrome/Safari WebGPU flags are active.";
-                console.error(err);
-            }
-        }
-    </script>
 </head>
 <body>
     <div class="nav-menu">
         <a href="index.html">🏠 Home</a>
-        <a href="process.html">⚙️ Processor</a>
+        <a href="process.html" class="active">⚙️ Process</a>
+        <a href="update.html">📰 Update</a>
         <a href="rationale.html">🧠 Rationale</a>
         <a href="sanity.html">✅ Sanity Check</a>
     </div>
 
-    <div class="header">
-        <h2>Local M1 WebGPU Execution Workspace</h2>
-        <div class="status-badge" id="status">Analyzing Initial Frame...</div>
-    </div>
+    <div class="container">
+        <p><span class="badge">Command prompt + AI agent</span></p>
+        <h1>How to run this project</h1>
+        <p>The keyer is a local Python + ffmpeg job. It crops to the green screen, removes the green, keeps the subject in <strong>full color</strong>, keeps the original <strong>sound</strong>, and writes a unique Canva-ready <code>.webm</code> with a transparent alpha channel. Every run also writes a process + performance log.</p>
 
-    <div class="grid">
-        <div class="panel">
-            <h3>1. Auto-Crop Detection Area</h3>
-            <canvas id="srcCanvas"></canvas>
+        <hr>
+
+        <h2>1. One-time setup</h2>
+        <p>In Terminal (or the agent’s command prompt), from this repo:</p>
+<pre>cd /Users/rifaterdemsahin/projects/chroma-keyer
+brew install ffmpeg
+python3 -c "from PIL import Image; print('Pillow OK')"</pre>
+        <p>If Pillow is missing: <code>pip3 install pillow</code>. ffmpeg must include <code>libvpx-vp9</code> (Homebrew’s ffmpeg does).</p>
+
+        <hr>
+
+        <h2>2. Run it yourself from the command prompt</h2>
+        <ol class="steps">
+            <li>Put the green-screen clip in this folder, or pass its path.</li>
+            <li>Run the script. Do not overwrite previous exports — each run creates a new filename.</li>
+            <li>Watch stdout for crop bounds, encode FPS, and the final output path.</li>
+        </ol>
+<pre>cd /Users/rifaterdemsahin/projects/chroma-keyer
+
+# Uses the sample clip if present, otherwise the newest .mp4/.mov in ./input or .
+python3 autocrop_rvm.py
+
+# Or point at any clip
+python3 autocrop_rvm.py /path/to/your-greenscreen.mp4
+
+# Optional: neural matting instead of chromakey (needs PyTorch)
+python3 autocrop_rvm.py --engine rvm your-clip.mp4</pre>
+        <p>Outputs land in <code>output/</code>. Logs land in <code>logs/</code>.</p>
+<pre>output/keyed_&lt;clip&gt;_&lt;YYYYMMDD_HHMMSS&gt;_&lt;id&gt;.webm
+logs/process_&lt;YYYYMMDD_HHMMSS&gt;_&lt;id&gt;.log</pre>
+
+        <hr>
+
+        <h2>3. Ask an AI agent to run it</h2>
+        <p>Open this repo in Grok Build, Claude Code, Cursor, or Google Antigravity. Paste this into the agent prompt (or type it at the command-prompt agent):</p>
+<pre>In the chroma-keyer repo, run the green-screen keyer from the command prompt.
+
+Use: python3 autocrop_rvm.py
+(or python3 autocrop_rvm.py PATH_TO_CLIP.mp4)
+
+Requirements:
+- Keep original audio on the output.
+- Keep the subject in full color. Do not export a black-and-white alpha matte.
+- Remove the green background (transparent alpha).
+- Write a unique filename under output/ so nothing is overwritten.
+- Print performance and process logs (also save under logs/).
+- The file must be Canva-ready: VP9 WebM with yuva420p alpha + audio.</pre>
+        <div class="callout">
+            <p style="margin:0;"><strong>Agent tip:</strong> Set terminal command execution to auto-approve if you want unattended batch runs. The script only needs ffmpeg + Python; it does not open a browser.</p>
         </div>
-        <div class="panel">
-            <h3>2. Local AI Alpha Matte Stream</h3>
-            <canvas id="alphaCanvas"></canvas>
-        </div>
+
+        <hr>
+
+        <h2>4. What a good run looks like</h2>
+        <p>Stdout (and the matching log file) should show:</p>
+        <ul>
+            <li>Source size, FPS, duration, and whether audio was found</li>
+            <li>Auto-crop box locked to the green backdrop</li>
+            <li>Encode progress: frame count, elapsed time, speed (e.g. <code>2.1x</code>)</li>
+            <li>A <strong>RUN SUMMARY</strong> with the unique output path</li>
+        </ul>
+<pre>========== RUN SUMMARY ==========
+Run ID     : 20260912_143015_a1b2c3d4
+Engine     : chromakey
+Output     : output/keyed_clip_20260912_143015_a1b2c3d4.webm
+Format     : VP9 WebM + alpha (yuva420p)
+Audio      : opus (source audio preserved)
+Color      : full color subject — green background removed
+Elapsed    : 18.40s
+Log        : logs/process_20260912_143015_a1b2c3d4.log
+=================================</pre>
+
+        <hr>
+
+        <h2>5. Drop it into Canva</h2>
+        <ol class="steps">
+            <li>Open a Canva <strong>Video</strong> project.</li>
+            <li><strong>Uploads → Upload files</strong> and choose the unique <code>.webm</code> from <code>output/</code>.</li>
+            <li>Drag it onto the timeline. The green is already gone; the checkerboard/transparent areas let your Canva background, slides, or B-roll show through.</li>
+            <li>Sound is already on the clip — unmute the track if Canva starts it quiet.</li>
+        </ol>
+        <p>Canva accepts WEBM up to 1 GB. This encoder uses VP9 with an alpha plane (<code>yuva420p</code>) plus Opus audio, which is the usual “transparent video + sound” package for web editors.</p>
+
+        <hr>
+
+        <h2>6. Optional flags</h2>
+<pre>python3 autocrop_rvm.py clip.mp4 --similarity 0.10 --blend 0.04 --padding 16
+python3 autocrop_rvm.py clip.mp4 --engine rvm</pre>
+        <ul>
+            <li><code>--similarity</code> / <code>--blend</code> — loosen or tighten the green key if a halo remains.</li>
+            <li><code>--padding</code> — extra pixels around the auto-crop box.</li>
+            <li><code>--engine rvm</code> — Apple Silicon MPS neural matte (person-shaped; may drop props like a mic).</li>
+        </ul>
     </div>
-    <video id="videoSource" muted playsinline></video>
 </body>
 </html>

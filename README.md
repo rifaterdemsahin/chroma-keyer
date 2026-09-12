@@ -2,36 +2,40 @@
 Clean green screen with code using AI on Apple Silicon.
 
 ## Live Demo
-Check out the automated WebGPU chroma keyer here: [Live Demo on GitHub Pages](https://rifaterdemsahin.github.io/chroma-keyer/)
+Docs site: [GitHub Pages](https://rifaterdemsahin.github.io/chroma-keyer/)
 
-## Overview
-This project implements an automated, browser-native green screen removal tool. It processes video footage in real-time, removing the green background without the need for manual human intervention typically required in traditional NLE software like DaVinci Resolve.
+## What it writes
+Each run creates a **unique** Canva-ready file:
 
-## M1 Apple Silicon AI Keying Pipeline
+- Full-color subject (not black-and-white)
+- Green background removed (VP9 WebM with alpha)
+- Original audio kept
+- Process + performance log
 
-This repository includes a robust video matting pipeline optimized for Apple Silicon (M1/M2/M3) Unified Memory architecture.
+```
+output/keyed_<clip>_<timestamp>_<id>.webm
+logs/process_<timestamp>_<id>.log
+```
 
-### 1. Local Python Pre-Processing Engine (`autocrop_rvm.py`)
-A script leveraging **Robust Video Matting (RVM - MobileNetV3)** and **PyTorch with MPS (Metal Performance Shaders)** back-end.
-- Automatically crops outer non-green boundaries on the first frame.
-- Outputs a hardware-accelerated Alpha Matte video sequence.
-- **Run:** `python autocrop_rvm.py`
+## Run from the command prompt
 
-### 2. Static Web Suite (`index.html` & `process.html`)
-A zero-dependency file ingestion dashboard and WebGPU AI runner for generating real-time alpha matte previews directly in the browser via `@xenova/transformers`.
+```bash
+python3 autocrop_rvm.py
+python3 autocrop_rvm.py /path/to/greenscreen.mp4
+```
 
-### Google Antigravity Agent Automation Setup
+Needs **ffmpeg** (`brew install ffmpeg`) and Python **Pillow**.
 
-Google Antigravity provides an agentic IDE workspace powered by Gemini 3.1 Pro. It can monitor your local workspace folders and run autonomous subagents to render files asynchronously.
+Ask an AI agent in this repo to run the same command. Full copy-paste prompt: [process.html](process.html). Changelog: [update.html](update.html).
 
-1. **Launch Google Antigravity** and open your project folder containing `autocrop_rvm.py`.
-2. Open the **Manager View** (Agent Command Center).
-3. Assign the following task prompt to the agent:
+## Canva
+Uploads → Upload files → drop the `.webm` on a video timeline. Transparent pixels let your Canva background show through; sound is already on the clip.
 
-> *"Monitor the `/input` folder in this workspace for incoming green screen `.mov` or `.mp4` video files. Automatically run `autocrop_rvm.py` using PyTorch on Apple Silicon (`--device mps`). Generate black-and-white alpha matte files to the `/output` folder with identical frame counts and timing, and log the GPU FPS performance to `render_log.txt`."*
+## Engines
+- Default: ffmpeg `chromakey` + `despill` after an auto-crop of the green backdrop (keeps color, mic, and audio).
+- Optional: `python3 autocrop_rvm.py --engine rvm` — Robust Video Matting on Apple Silicon MPS when PyTorch is installed.
 
-4. Set **Terminal Command Execution** in Antigravity settings to **Always Proceed (Turbo Mode)** to allow the agent to launch PyTorch batch commands without requiring manual confirmation prompts.
+## Google Antigravity / any CLI agent
+> Monitor this folder for green-screen `.mov` or `.mp4` files. Run `python3 autocrop_rvm.py <file>`. Keep audio, keep color, remove the green to transparent alpha, write a unique filename under `output/`, and print performance logs.
 
-## Verification of Performance Improvements
-- **Playback Performance:** Import the generated `output_alpha.mp4` file into DaVinci Resolve as an Alpha matte overlay. Resolve timeline playback will maintain a locked 24/30 FPS without frame drops, as it reads pre-rendered image masks rather than calculating neural network passes on the fly.
-- **GPU Footprint:** Check **Activity Monitor -> Memory**. Dedicated Python/MPS batch runs avoid the heavy VRAM overhead of running Resolve's GUI, color engine, and Magic Mask AI simultaneously.
+Set terminal command execution to auto-approve for unattended runs.
