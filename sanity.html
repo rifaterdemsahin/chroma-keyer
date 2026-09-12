@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanity Check | M1 AI Keyer</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; line-height: 1.6; }
+        .container { max-width: 800px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h1, h2, h3, h4 { color: #f1f5f9; margin-top: 0; }
+        p, li { color: #94a3b8; font-size: 1rem; }
+        .nav-menu { display: flex; justify-content: center; gap: 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.1rem; transition: color 0.2s; }
+        .nav-menu a:hover { color: var(--accent); }
+        hr { border: 0; height: 1px; background: #334155; margin: 2rem 0; }
+        .verdict { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 4px; font-weight: bold; margin-bottom: 1rem; }
+        .verdict.solid { background: #064e3b; color: #34d399; }
+        .verdict.fragile { background: #78350f; color: #fbbf24; }
+        .verdict.inefficient { background: #7f1d1d; color: #f87171; }
+        pre { background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; color: #38bdf8; }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <a href="index.html">🏠 Home</a>
+        <a href="process.html">⚙️ Processor</a>
+        <a href="rationale.html">🧠 Rationale</a>
+        <a href="sanity.html">✅ Sanity Check</a>
+    </div>
+
+    <div class="container">
+        <h2>The Reality Check: What Works vs. What Doesn't</h2>
+        <p>Here is the direct sanity check of the workflow, broken down by what holds up vs. where the execution hits real-world bottlenecks.</p>
+
+        <hr>
+
+        <h4>✅ 1. The Core Strategy (Offloading to Alpha Mattes)</h4>
+        <div class="verdict solid">Verdict: 100% Solid.</div>
+        <p>Pre-rendering black-and-white alpha mattes to lighten your NLE timeline is a standard industry practice. Offloading heavy mask generation to a separate step so DaVinci Resolve only has to read pre-baked alpha frames eliminates timeline lag and GPU memory exhaustion on your M1 Mini.</p>
+
+        <hr>
+
+        <h4>⚠️ 2. OpenCV Auto-Cropping (<code>autocrop_rvm.py</code>)</h4>
+        <div class="verdict fragile">Verdict: Good, but fragile.</div>
+        <p>Using HSV thresholding to detect the green backdrop boundary works well <strong>only if your lighting is completely even</strong>.</p>
+        <ul>
+            <li><strong>The Vulnerability:</strong> Shadowed corners or light falloff near the edges of your green screen can fool OpenCV into miscalculating the bounding box, cutting off your hands or shoulders if you move near the edge.</li>
+            <li><strong>The Fix:</strong> Hardcode a static rectangular crop box after testing frame 1, or add a generous pixel safety margin (<code>padding = 50</code> or <code>100</code>) to ensure you don't accidentally clip subject movement.</li>
+        </ul>
+
+        <hr>
+
+        <h4>❌ 3. The Browser / GitHub Pages Approach (<code>process.html</code>)</h4>
+        <div class="verdict inefficient">Verdict: Inefficient for batch video processing.</div>
+        <p>While running <code>Transformers.js</code> / WebGPU directly in Chrome or Safari is technically possible via static HTML files, it is <strong>not recommended for processing long video files</strong>.</p>
+        <ul>
+            <li><strong>Browser Memory Limits:</strong> Web browsers place strict memory caps on canvas buffers and WebGPU tensors per tab. Processing hundreds or thousands of frames inside a browser page will quickly trigger out-of-memory crashes on an 8GB M1 Mini.</li>
+            <li><strong>Format Overhead:</strong> Extracting frames to canvas data URLs (<code>toDataURL('image/png')</code>) on every frame creates massive CPU overhead that defeats the purpose of hardware acceleration.</li>
+            <li><strong>Better Path:</strong> Stick to the native Python script (<code>autocrop_rvm.py</code>) for production work. Use the GitHub Pages HTML setup solely as a quick interactive preview tool rather than your primary video exporter.</li>
+        </ul>
+
+        <hr>
+
+        <h3>Recommended Production Blueprint</h3>
+        <p>To keep your workflow bulletproof on an M1 Mac Mini:</p>
+        <pre>
+[Raw Video Input]
+       │
+       ▼
+[Local Python Script via Terminal / Antigravity Agent]
+  ├─ Hardware: M1 MPS / Metal Acceleration
+  ├─ Engine: Robust Video Matting (RVM MobileNetV3)
+  └─ Action: Fixed static crop + render 8-bit Alpha MOV/MP4
+       │
+       ▼
+[DaVinci Resolve Assembly]
+  ├─ Track 1: Original Full-Color Video
+  ├─ Track 2: Pre-rendered Alpha Matte Video (Linked via Alpha Output)
+  └─ Result: Locked 24/30 FPS Timeline Playback
+        </pre>
+        <p>This setup achieves your goal: maximum efficiency, high edge quality on hair/motion blur, and a locked 24/30 FPS editing experience in DaVinci Resolve.</p>
+    </div>
+</body>
+</html>

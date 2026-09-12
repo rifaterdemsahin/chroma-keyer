@@ -32,7 +32,7 @@ def run_m1_alpha_pipeline(input_path, output_path):
     print(f"Loading RVM Model onto Apple Silicon ({device})...")
     
     # Load RVM MobileNetV3 variant for lowest memory footprint
-    model = torch.hub.load("PeterLSO/RobustVideoMatting", "rvm_mobilenetv3").to(device).eval()
+    model = torch.hub.load("PeterL1n/RobustVideoMatting", "mobilenetv3", trust_repo=True).to(device).eval()
     
     cap = cv2.VideoCapture(input_path)
     ret, first_frame = cap.read()
@@ -66,7 +66,7 @@ def run_m1_alpha_pipeline(input_path, output_path):
             src = torch.from_numpy(rgb).float().permute(2, 0, 1).unsqueeze(0).div(255).to(device)
             
             # Execute RVM matting step
-            fgr, pha, rec = model(src, *rec, downsample_ratio=0.25)
+            fgr, pha, *rec = model(src, *rec, downsample_ratio=0.25)
             
             # Export 8-bit single-channel black & white alpha mask
             alpha = (pha.squeeze().cpu().numpy() * 255).astype(np.uint8)
