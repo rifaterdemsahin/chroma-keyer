@@ -36,16 +36,16 @@
 
     <div class="container">
         <p class="meta">Release notes · 12 Sep 2026</p>
-        <h1>Canva-ready color key, audio, unique files, logs</h1>
+        <h1>🎨 Canva-ready color key, 🔊 audio, 🆔 unique files, 📊 logs</h1>
         <p>This update changes the production output. The keyer no longer dumps a silent black-and-white alpha movie. It now writes a unique, full-color clip with the green removed and the original soundtrack still attached — a file you can drop straight into Canva’s video editor.</p>
 
-        <h2>Agent-first + localhost libraries</h2>
+        <h2>🤖 Agent-first + 💻 localhost libraries</h2>
         <p>Day-to-day run is <strong>Grok / Claude / Antigravity (agy)</strong> in the terminal, not the GitHub Pages UI. <code>AGENTS.md</code> plus <code>python3 autocrop_rvm.py --watch</code> let the agent monitor <code>input/</code>. Optional docs server: <code>python3 serve.py</code> → <a href="http://127.0.0.1:8876/process.html" style="color:#38bdf8;">http://127.0.0.1:8876/process.html</a> so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
         <p>The same agents <strong>quality-assure</strong> every file: <code>python3 qa.py</code> checks audio, alpha, color (not B/W), subject still there, and green gone. Encode already runs QA. <strong>PASS is the gate to Canva.</strong></p>
 
         <hr>
 
-        <h2>What changed</h2>
+        <h2>📝 What changed</h2>
         <table>
             <thead>
                 <tr><th>Before</th><th>Now</th></tr>
@@ -74,7 +74,7 @@
             </tbody>
         </table>
 
-        <h2>Output contract</h2>
+        <h2>📦 Output contract</h2>
         <ul>
             <li><span class="tag on">COLOR</span> Subject stays in color. No grayscale matte export.</li>
             <li><span class="tag on">ALPHA</span> Green backdrop is transparent, not black or white.</li>
@@ -83,18 +83,18 @@
             <li><span class="tag off">NOT B/W</span> <code>output_alpha.mp4</code> is no longer produced.</li>
         </ul>
 
-        <h2>How to run</h2>
+        <h2>▶️ How to run</h2>
         <p>Full command-prompt and AI-agent instructions live on the <a href="process.html" style="color:#38bdf8;">Process</a> page.</p>
 <pre>python3 autocrop_rvm.py
 python3 autocrop_rvm.py /path/to/clip.mp4</pre>
 
-        <h2>Where to look after a run</h2>
+        <h2>📂 Where to look after a run</h2>
         <ul>
             <li><code>output/keyed_*.webm</code> — drop this into Canva → Uploads → timeline</li>
             <li><code>logs/process_*.log</code> — crop box, encode FPS, speed, elapsed time, output probe</li>
         </ul>
 
-        <h2>Pages</h2>
+        <h2>📄 Pages</h2>
         <ul>
             <li><strong>Process</strong> — how to run from the command prompt or by asking an AI agent.</li>
             <li><strong>Output</strong> — the keyed clip plus the Canva project walkthrough.</li>

@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M1 AI Keyer Studio</title>
+    <title>🟩 M1 AI Keyer Studio</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; }
-        .container { max-width: 550px; margin: 4rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        .container { max-width: 760px; margin: 2rem auto; background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
         h1 { font-size: 1.5rem; margin-top: 0; }
+        h2 { font-size: 1.1rem; color: #f1f5f9; margin: 1.6rem 0 0.6rem; }
         p { color: #94a3b8; font-size: 0.95rem; }
-        .action-btn { width: 100%; background: var(--accent); color: #0f172a; border: none; padding: 0.8rem; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+        .action-btn { width: 100%; background: var(--accent); color: #0f172a; border: none; padding: 0.8rem; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 0.7rem; }
         .action-btn:hover { opacity: 0.9; }
         .nav-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 20px; padding: 1rem; margin-bottom: 2rem; background: var(--card); border-radius: 8px; border: 1px solid #334155; max-width: 840px; margin-left: auto; margin-right: auto; }
         .nav-menu a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 1.05rem; transition: color 0.2s; }
         .nav-menu a:hover { color: var(--accent); }
         .action-btn.secondary { background: #334155; color: #f8fafc; }
-        pre { background: #0f172a; padding: 0.9rem 1rem; border-radius: 8px; overflow-x: auto; color: #7dd3fc; font-size: 0.85rem; text-align: left; }
+        .ok { background: #064e3b; color: #34d399; display: inline-block; padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 700; }
+        .prompt-box { position: relative; margin: 0.8rem 0 0; }
+        .copy-btn { position: absolute; top: 0.55rem; right: 0.55rem; background: #38bdf8; color: #0f172a; border: none; border-radius: 6px; padding: 0.4rem 0.7rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; z-index: 1; }
+        .copy-btn:hover { opacity: 0.9; }
+        .copy-btn.copied { background: #34d399; }
+        pre { background: #0f172a; padding: 2.4rem 1rem 1rem; border-radius: 8px; overflow-x: auto; color: #7dd3fc; font-size: 0.82rem; text-align: left; line-height: 1.45; border: 1px solid #334155; white-space: pre-wrap; }
+        code { color: #7dd3fc; }
     </style>
 </head>
 <body>
@@ -30,15 +37,78 @@
     </div>
 
     <div class="container">
-        <h1>M1 Mac AI Green Screen Keyer</h1>
-        <p>Run this with a terminal agent (Grok, Claude, Antigravity/agy) that keys clips, monitors logs, and <strong>QAs the file</strong> before Canva. The HTML is optional; if you open it, use localhost so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
-<pre>grok          # or: claude    # or: Antigravity / agy
-python3 autocrop_rvm.py --watch
-python3 qa.py                # required gate (also runs after encode)
-python3 serve.py --open      # optional: http://127.0.0.1:8876/</pre>
-        <button class="action-btn" onclick="window.location.href='process.html'">Agent process + localhost</button>
-        <button class="action-btn secondary" onclick="window.location.href='output.html'">Keyed output</button>
-        <button class="action-btn secondary" onclick="window.location.href='update.html'">What changed</button>
+        <p><span class="ok">✅ WebM output is good and usable</span></p>
+        <h1>🟩 M1 Mac AI Green Screen Keyer</h1>
+        <p>Run this with a terminal agent (🤖 Grok, Claude, or Antigravity/agy). The agent keys the clip, 👀 monitors logs, and ✅ QAs the file before 🎨 Canva. HTML is optional — if you open it, use 💻 localhost so the browser can reach local <code>output/</code> and <code>logs/</code>.</p>
+        <p>The checked-in clip is <strong>color + audio + transparent alpha</strong> — drop it on a Canva timeline as-is.</p>
+
+        <h2>📋 Agent prompt — copy and run</h2>
+        <p>Paste into Grok, Claude, or agy. One click copies the whole brief.</p>
+        <div class="prompt-box">
+            <button type="button" class="copy-btn" id="copyBtn" onclick="copyPrompt()">📋 Copy prompt</button>
+            <pre id="agentPrompt">In chroma-keyer, you are the operator. Do not use the GitHub Pages UI.
+
+1. cd /Users/rifaterdemsahin/projects/chroma-keyer
+2. Confirm ffmpeg and Pillow. Install if missing (brew install ffmpeg; pip3 install pillow).
+3. If I drop a clip, run:
+     python3 autocrop_rvm.py PATH_TO_CLIP.mp4
+   To sit on the inbox:
+     python3 autocrop_rvm.py --watch
+   (watches input/ for new .mp4/.mov)
+4. Keep original audio. Keep full color. Remove the green to transparent alpha.
+   Unique filename under output/. Never overwrite. Never write a B/W matte.
+5. Monitor the job: tail stdout and logs/process_*.log. Report FPS, speed, failures.
+6. Quality assurance (required, do not skip):
+     python3 qa.py
+     python3 qa.py PATH_TO_KEYED.webm
+   Encode already calls qa.py. Re-run it yourself and read logs/qa_*.log.
+   Inspect the sampled PNGs (logs/qa_*_t0.png …). Confirm:
+     - corners transparent (not green, not black fill)
+     - subject still in COLOR (not a grayscale matte)
+     - mic/person not keyed out
+     - audio present
+   FAIL ⇒ do not upload to Canva. Fix flags or crop and re-run.
+7. When QA PASSES, print the unique output/keyed_*.webm path, process log, and QA log.
+8. Optional local preview:
+     python3 serve.py
+   then http://127.0.0.1:8876/output/ and /logs/
+9. Canva project: https://canva.link/feekl13cfrcl5y5
+   Upload only QA-PASS files → timeline. Unmute if needed.
+
+The existing WebM is good and usable (color, sound, transparent background).</pre>
+        </div>
+
+        <button class="action-btn" onclick="window.location.href='output.html'">🎬 Play the keyed WebM</button>
+        <button class="action-btn secondary" onclick="window.location.href='process.html'">⚙️ Full process + localhost</button>
+        <button class="action-btn secondary" onclick="window.location.href='https://canva.link/feekl13cfrcl5y5'">🎨 Open Canva project</button>
     </div>
+    <script>
+        function copyPrompt() {
+            const text = document.getElementById('agentPrompt').innerText;
+            const btn = document.getElementById('copyBtn');
+            const done = () => {
+                btn.textContent = '✅ Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy prompt';
+                    btn.classList.remove('copied');
+                }, 1800);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(fallback);
+            } else {
+                fallback();
+            }
+            function fallback() {
+                const range = document.createRange();
+                range.selectNodeContents(document.getElementById('agentPrompt'));
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                try { document.execCommand('copy'); } catch (e) {}
+                done();
+            }
+        }
+    </script>
 </body>
 </html>

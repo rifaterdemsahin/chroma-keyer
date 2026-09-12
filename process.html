@@ -28,6 +28,11 @@
         .agent { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1rem; }
         .agent h3 { font-size: 1rem; margin-bottom: 0.4rem; }
         .agent p { font-size: 0.9rem; margin: 0.35rem 0; }
+        .ok { background: #064e3b; color: #34d399; display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
+        .prompt-box { position: relative; }
+        .copy-btn { position: absolute; top: 0.55rem; right: 0.55rem; background: #38bdf8; color: #0f172a; border: none; border-radius: 6px; padding: 0.4rem 0.7rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; z-index: 1; }
+        .copy-btn.copied { background: #34d399; }
+        .prompt-box pre { padding-top: 2.5rem; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -41,32 +46,33 @@
     </div>
 
     <div class="container">
-        <p><span class="badge">Agent-first · QA gated · localhost libraries</span></p>
-        <h1>How to run this project</h1>
+        <p><span class="badge">🤖 Agent-first · ✅ QA gated · 💻 localhost</span></p>
+        <p><span class="ok">✅ WebM output is good and usable</span></p>
+        <h1>⚙️ How to run this project</h1>
         <p>This is a <strong>terminal job</strong>. An AI agent — <strong>Grok</strong>, <strong>Claude</strong>, or <strong>Antigravity (agy)</strong> — <strong>runs the keyer and then quality-assures the file</strong> before anything goes to Canva. The HTML pages are optional docs. If you open them at all, use <strong>localhost</strong> so the browser can reach local clips, logs, and libraries. Do not depend on GitHub Pages for day-to-day work.</p>
 
         <hr>
 
-        <h2>1. Agents (default)</h2>
+        <h2>1. 🤖 Agents (default)</h2>
         <p>Open this repo in the agent. It already has <code>AGENTS.md</code>. The agent both <strong>operates</strong> the encode and <strong>QAs</strong> the result. Paste the monitor prompt below, or say “watch input, key new clips, and QA them.”</p>
 
         <div class="agents">
             <div class="agent">
-                <h3>Grok Build</h3>
+                <h3>🟣 Grok Build</h3>
                 <p><a class="ext" href="https://x.ai/cli" target="_blank" rel="noopener">x.ai/cli</a> · <a class="ext" href="https://docs.x.ai/build/overview" target="_blank" rel="noopener">docs</a></p>
                 <pre style="margin:0.5rem 0 0;">curl -fsSL https://x.ai/cli/install.sh | bash
 cd /Users/rifaterdemsahin/projects/chroma-keyer
 grok</pre>
             </div>
             <div class="agent">
-                <h3>Claude Code</h3>
+                <h3>🟠 Claude Code</h3>
                 <p><a class="ext" href="https://code.claude.com/docs/en/overview" target="_blank" rel="noopener">docs</a> · <a class="ext" href="https://docs.anthropic.com/en/docs/claude-code/setup" target="_blank" rel="noopener">setup</a></p>
                 <pre style="margin:0.5rem 0 0;">curl -fsSL https://claude.ai/install.sh | bash
 cd /Users/rifaterdemsahin/projects/chroma-keyer
 claude</pre>
             </div>
             <div class="agent">
-                <h3>Antigravity (agy)</h3>
+                <h3>🌌 Antigravity (agy)</h3>
                 <p><a class="ext" href="https://antigravity.google/download/" target="_blank" rel="noopener">download</a> · <a class="ext" href="https://antigravity.google/" target="_blank" rel="noopener">product</a></p>
                 <pre style="margin:0.5rem 0 0;">curl -fsSL https://antigravity.google/cli/install.sh | bash
 # or open the folder in Antigravity Manager
@@ -74,8 +80,10 @@ claude</pre>
             </div>
         </div>
 
-        <h3>Monitor prompt (paste into Grok / Claude / agy)</h3>
-<pre>In chroma-keyer, you are the operator. Do not use the GitHub Pages UI.
+        <h3>📋 Monitor prompt (paste into Grok / Claude / agy)</h3>
+        <div class="prompt-box">
+            <button type="button" class="copy-btn" id="copyBtn" onclick="copyPrompt()">📋 Copy prompt</button>
+<pre id="agentPrompt">In chroma-keyer, you are the operator. Do not use the GitHub Pages UI.
 
 1. cd /Users/rifaterdemsahin/projects/chroma-keyer
 2. Confirm ffmpeg and Pillow. Install if missing (brew install ffmpeg; pip3 install pillow).
@@ -102,7 +110,10 @@ claude</pre>
      python3 serve.py
    then http://127.0.0.1:8876/output/ and /logs/
 9. Canva project: https://canva.link/feekl13cfrcl5y5
-   Upload only QA-PASS files → timeline. Unmute if needed.</pre>
+   Upload only QA-PASS files → timeline. Unmute if needed.
+
+The existing WebM is good and usable (color, sound, transparent background).</pre>
+        </div>
 
         <div class="callout">
             <p style="margin:0;">Let the agent auto-approve terminal commands for this repo. The keyer never needs a browser. The agent’s job is to <strong>run, monitor, and QA</strong> — a PASS from <code>qa.py</code> is the gate to Canva.</p>
@@ -110,7 +121,7 @@ claude</pre>
 
         <hr>
 
-        <h2>2. Localhost servers and libraries</h2>
+        <h2>2. 💻 Localhost servers and libraries</h2>
         <p>Use this only if you want to glance at docs or play a keyed file. Bind loopback so the page can load <code>output/</code>, <code>logs/</code>, and <code>demo/</code> — those are local libraries, not GitHub Pages.</p>
 <pre>python3 serve.py
 python3 serve.py --open          # Google Chrome → process.html
@@ -133,7 +144,7 @@ python3 serve.py --open          # Google Chrome → process.html
 
         <hr>
 
-        <h2>3. One-shot from the command prompt</h2>
+        <h2>3. ⌨️ One-shot from the command prompt</h2>
         <p>Same commands the agent runs. You rarely need this if Grok/Claude/agy is already watching.</p>
 <pre>cd /Users/rifaterdemsahin/projects/chroma-keyer
 python3 autocrop_rvm.py
@@ -146,7 +157,7 @@ logs/process_&lt;YYYYMMDD_HHMMSS&gt;_&lt;id&gt;.log</pre>
 
         <hr>
 
-        <h2>4. Agent QA (required gate)</h2>
+        <h2>4. ✅ Agent QA (required gate)</h2>
         <p>Every encode is quality-assured by the same class of agent that ran it (Grok, Claude, or agy). <code>autocrop_rvm.py</code> already calls <code>qa.py</code>. The agent must still read the report and look at the sampled frames. <strong>No QA PASS → no Canva upload.</strong></p>
 <pre>python3 qa.py
 python3 qa.py output/keyed_….webm</pre>
@@ -155,13 +166,13 @@ python3 qa.py output/keyed_….webm</pre>
                 <tr><th>Check</th><th>Pass means</th></tr>
             </thead>
             <tbody>
-                <tr><td><code>audio</code></td><td>Opus (or other) soundtrack is on the file — not silent</td></tr>
-                <tr><td><code>alpha</code></td><td><code>alpha_mode=1</code> so Canva can see through the old green</td></tr>
-                <tr><td><code>codec</code></td><td>VP9 WebM, not a black-and-white matte movie</td></tr>
-                <tr><td><code>corners-transparent</code></td><td>Backdrop is gone (checkerboard / Canva layer shows)</td></tr>
-                <tr><td><code>subject-present</code></td><td>Person and mic were not keyed out</td></tr>
-                <tr><td><code>color-not-grayscale</code></td><td>Subject is in color</td></tr>
-                <tr><td><code>green-gone</code></td><td>Opaque pixels are not leftover green screen</td></tr>
+                <tr><td>🔊 <code>audio</code></td><td>Opus (or other) soundtrack is on the file — not silent</td></tr>
+                <tr><td>🪄 <code>alpha</code></td><td><code>alpha_mode=1</code> so Canva can see through the old green</td></tr>
+                <tr><td>📦 <code>codec</code></td><td>VP9 WebM, not a black-and-white matte movie</td></tr>
+                <tr><td>🪟 <code>corners-transparent</code></td><td>Backdrop is gone (checkerboard / Canva layer shows)</td></tr>
+                <tr><td>🧑 <code>subject-present</code></td><td>Person and mic were not keyed out</td></tr>
+                <tr><td>🌈 <code>color-not-grayscale</code></td><td>Subject is in color</td></tr>
+                <tr><td>🟩 <code>green-gone</code></td><td>Opaque pixels are not leftover green screen</td></tr>
             </tbody>
         </table>
         <p>Reports land in <code>logs/qa_*.log</code> plus PNG samples <code>logs/qa_*_t0.png</code> … <code>t2.png</code>. On FAIL the agent re-runs with tighter/looser <code>--similarity</code> / <code>--padding</code> and QAs again.</p>
@@ -176,7 +187,7 @@ RESULT PASS</pre>
 
         <hr>
 
-        <h2>5. What the agent should see</h2>
+        <h2>5. 📊 What the agent should see</h2>
 <pre>========== RUN SUMMARY ==========
 Run ID     : 20260912_090050_1af08980
 Engine     : chromakey
@@ -190,7 +201,7 @@ Log        : logs/process_….log
 
         <hr>
 
-        <h2>6. Canva (only after QA PASS)</h2>
+        <h2>6. 🎨 Canva (only after QA PASS)</h2>
         <p>Project: <a class="ext" href="https://canva.link/feekl13cfrcl5y5" target="_blank" rel="noopener">https://canva.link/feekl13cfrcl5y5</a></p>
         <ol class="steps">
             <li>Take the unique <code>.webm</code> from <code>output/</code> (or <a class="ext" href="http://127.0.0.1:8876/output/">localhost output library</a>).</li>
@@ -201,7 +212,7 @@ Log        : logs/process_….log
 
         <hr>
 
-        <h2>7. Optional flags</h2>
+        <h2>7. 🔧 Optional flags</h2>
 <pre>python3 autocrop_rvm.py clip.mp4 --similarity 0.10 --blend 0.04 --padding 16
 python3 autocrop_rvm.py --watch input</pre>
         <ul>
@@ -211,5 +222,33 @@ python3 autocrop_rvm.py --watch input</pre>
             <li><code>--engine rvm</code> — neural matte (may drop the mic).</li>
         </ul>
     </div>
+    <script>
+        function copyPrompt() {
+            const text = document.getElementById('agentPrompt').innerText;
+            const btn = document.getElementById('copyBtn');
+            const done = () => {
+                btn.textContent = '✅ Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy prompt';
+                    btn.classList.remove('copied');
+                }, 1800);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(fallback);
+            } else {
+                fallback();
+            }
+            function fallback() {
+                const range = document.createRange();
+                range.selectNodeContents(document.getElementById('agentPrompt'));
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                try { document.execCommand('copy'); } catch (e) {}
+                done();
+            }
+        }
+    </script>
 </body>
 </html>
