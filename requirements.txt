@@ -1,0 +1,2 @@
+# Local keyer + QA (Apple Silicon). ffmpeg is a system binary: brew install ffmpeg
+Pillow>=10.0.0

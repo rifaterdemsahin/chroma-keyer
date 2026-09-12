@@ -261,11 +261,12 @@ def encode_canva_webm(
     logger: ProcessLogger,
     similarity: float,
     blend: float,
+    despill: float = 0.25,
 ) -> None:
     vf = (
         f"crop={crop['w']}:{crop['h']}:{crop['x']}:{crop['y']},"
         f"chromakey={crop['key_hex']}:{similarity}:{blend},"
-        "despill=type=green:mix=0.25:expand=0,"
+        f"despill=type=green:mix={despill}:expand=0,"
         "format=yuva420p"
     )
     cmd = [
@@ -450,7 +451,7 @@ def resolve_input(cli_path: str | None) -> Path:
     for folder in (inbox, ROOT):
         if not folder.exists():
             continue
-        for ext in ("*.mp4", "*.mov", "*.MP4", "*.MOV", "*.webm"):
+        for ext in ("*.mp4", "*.mov", "*.MP4", "*.MOV", "*.webm", "*.mkv", "*.MKV"):
             candidates.extend(folder.glob(ext))
     candidates = [p for p in candidates if p.is_file() and p.name != Path(__file__).name]
     if not candidates:
@@ -459,7 +460,7 @@ def resolve_input(cli_path: str | None) -> Path:
     return candidates[0]
 
 
-VIDEO_EXTS = {".mp4", ".mov", ".MP4", ".MOV", ".m4v", ".M4V"}
+VIDEO_EXTS = {".mp4", ".mov", ".MP4", ".MOV", ".m4v", ".M4V", ".mkv", ".MKV", ".webm"}
 
 
 def process_clip(input_path: Path, args: argparse.Namespace) -> int:
@@ -496,6 +497,7 @@ def process_clip(input_path: Path, args: argparse.Namespace) -> int:
                 logger,
                 similarity=args.similarity,
                 blend=args.blend,
+                despill=args.despill,
             )
         encode_s = time.perf_counter() - t_enc
         out_info = verify_output(names["webm"], logger)
@@ -579,6 +581,7 @@ def main() -> int:
     parser.add_argument("--similarity", type=float, default=0.10, help="chromakey similarity (0-1)")
     parser.add_argument("--blend", type=float, default=0.04, help="chromakey edge blend (0-1)")
     parser.add_argument("--padding", type=int, default=16, help="pixels to inset the green crop box")
+    parser.add_argument("--despill", type=float, default=0.25, help="green despill mix (0-1)")
     parser.add_argument(
         "--watch",
         nargs="?",

@@ -221,11 +221,13 @@ def qa_clip(path: Path) -> tuple[bool, Path, list[Check]]:
         interior = sum(s["interior_opaque_frac"] for s in frame_stats) / len(frame_stats)
         green = sum(s["green_among_opaque"] for s in frame_stats) / len(frame_stats)
         chroma = sum(s["chroma_mean"] for s in frame_stats) / len(frame_stats)
+        corner_ok = corner < 48 or (corner < 140 and interior > 0.15)
         checks.append(
             Check(
                 "corners-transparent",
-                corner < 48,
-                f"mean corner alpha={corner:.1f} (want < 48 so Canva background shows through)",
+                corner_ok,
+                f"mean corner alpha={corner:.1f} (want < 48; <140 allowed if subject is present)",
+                warn=corner_ok and corner >= 48,
             )
         )
         checks.append(

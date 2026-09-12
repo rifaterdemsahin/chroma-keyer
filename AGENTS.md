@@ -24,7 +24,9 @@ python3 qa.py output/keyed_….webm               # QA a specific file
 python3 serve.py                                # optional localhost docs at :8876
 ```
 
-Needs Homebrew `ffmpeg` (libvpx-vp9) and Python Pillow. Optional `--engine rvm` needs PyTorch.
+Needs Homebrew `ffmpeg` (libvpx-vp9). Python libs: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` (Pillow). Optional `--engine rvm` needs PyTorch.
+
+Accepts `.mp4`, `.mov`, `.mkv`. Example: `python3 autocrop_rvm.py "/Users/rifaterdemsahin/Downloads/clip.mkv"`
 
 ## QA gate (required)
 

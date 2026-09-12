@@ -1,5 +1,6 @@
 venv/
 venv_new/
+.venv/
 __pycache__/
 *.mp4
 *.mov
