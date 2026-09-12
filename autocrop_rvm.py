@@ -120,24 +120,73 @@ def unique_names(input_path: Path) -> dict:
     }
 
 
-def extract_analysis_frame(input_path: Path, dest: Path, logger: ProcessLogger) -> None:
+def _is_green_pixel(r: int, g: int, b: int) -> bool:
+    return g > 100 and g > r * 1.4 and g > b * 1.4 and (g - r) > 40
+
+
+def count_green_samples(frame_path: Path) -> int:
+    im = Image.open(frame_path).convert("RGB")
+    w, h = im.size
+    px = im.load()
+    n = 0
+    for y in range(0, h, 2):
+        for x in range(0, w, 2):
+            r, g, b = px[x, y]
+            if _is_green_pixel(r, g, b):
+                n += 1
+    return n
+
+
+def extract_analysis_frame(
+    input_path: Path, dest: Path, logger: ProcessLogger, duration: float = 0
+) -> float:
+    """Locked camera: pick the frame with the *most* green (empty plate).
+
+    One-person setup: the operator walks in later. An empty-screen frame is
+    the best garbage matte — do not crop from a frame where they are already in.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        which_ffmpeg(),
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-y",
-        "-ss",
-        "0.4",
-        "-i",
-        str(input_path),
-        "-frames:v",
-        "1",
-        str(dest),
-    ]
-    logger.info("extract analysis frame: " + " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    times = [0.4, 1.2, 3.0, 8.0]
+    if duration > 25:
+        times.extend([min(15.0, duration * 0.05), min(25.0, duration * 0.08)])
+    times = [t for t in times if duration <= 0 or t < max(duration - 0.3, 0.5)]
+    if not times:
+        times = [0.4]
+
+    best_n = -1
+    best_t = times[0]
+    best_path: Path | None = None
+    for i, t in enumerate(times):
+        cand = dest.parent / f"{dest.stem}_t{i}.png"
+        cmd = [
+            which_ffmpeg(),
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-y",
+            "-ss",
+            f"{t:.3f}",
+            "-i",
+            str(input_path),
+            "-frames:v",
+            "1",
+            str(cand),
+        ]
+        subprocess.run(cmd, check=True)
+        n = count_green_samples(cand)
+        logger.info(f"locked-cam plate candidate t={t:.1f}s green_samples={n}")
+        if n > best_n:
+            best_n = n
+            best_t = t
+            best_path = cand
+    if best_path is None:
+        raise ValueError("Could not extract a plate frame.")
+    shutil.copy(best_path, dest)
+    logger.info(
+        f"locked-cam using empty-plate frame t={best_t:.1f}s "
+        f"(most green={best_n}) — camera locked, actor walks in later"
+    )
+    return best_t
 
 
 def detect_green_crop(frame_path: Path, padding: int = 16) -> dict:
@@ -151,7 +200,7 @@ def detect_green_crop(frame_path: Path, padding: int = 16) -> dict:
     for y in range(0, h, step):
         for x in range(0, w, step):
             r, g, b = px[x, y]
-            if g > 100 and g > r * 1.4 and g > b * 1.4 and (g - r) > 40:
+            if _is_green_pixel(r, g, b):
                 if x < min_x:
                     min_x = x
                 if y < min_y:
@@ -478,11 +527,13 @@ def process_clip(input_path: Path, args: argparse.Namespace) -> int:
         )
 
         frame_path = LOGS_DIR / f"analysis_{names['run_id']}.png"
-        extract_analysis_frame(input_path, frame_path, logger)
+        plate_t = extract_analysis_frame(input_path, frame_path, logger, duration=media["duration"])
         crop = detect_green_crop(frame_path, padding=args.padding)
+        crop["plate_t"] = plate_t
         logger.info(
             f"crop x={crop['x']} y={crop['y']} w={crop['w']} h={crop['h']} "
-            f"key={crop['key_hex']} rgb={crop['key_rgb']} samples={crop['green_samples']}"
+            f"key={crop['key_hex']} rgb={crop['key_rgb']} samples={crop['green_samples']} "
+            f"locked_cam plate_t={plate_t:.1f}s"
         )
 
         t_enc = time.perf_counter()

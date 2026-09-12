@@ -54,6 +54,16 @@
 
         <hr>
 
+        <h2>0. 🎥 How this is shot</h2>
+        <p>Locked camera. The greenscreen does not move. One-person operation: you start record, walk into the plate, talk, walk out. The keyer treats that as the default.</p>
+        <ul>
+            <li>📐 Crop is taken from the <strong>emptiest green frame</strong> (setup / walk-out), not from a frame where you are already in shot.</li>
+            <li>🚶 QA expects empty-plate samples at the start. Those are not a fail. It scores color/subject on the on-plate samples.</li>
+            <li>🔒 Because the camera is locked, one crop box applies to the whole clip.</li>
+        </ul>
+
+        <hr>
+
         <h2>1. 🤖 Agents (default)</h2>
         <p>Open this repo in the agent. It already has <code>AGENTS.md</code>. The agent both <strong>operates</strong> the encode and <strong>QAs</strong> the result. Paste the monitor prompt below, or say “watch input, key new clips, and QA them.”</p>
 

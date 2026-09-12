@@ -203,7 +203,9 @@ def qa_clip(path: Path) -> tuple[bool, Path, list[Check]]:
     )
 
     duration = info["duration"] or 1.0
-    samples = [max(0.15, duration * 0.12), duration * 0.5, min(duration - 0.15, duration * 0.82)]
+    # Locked camera, one-person: actor walks in. Probe intro + on-plate times.
+    fractions = (0.08, 0.22, 0.38, 0.52, 0.68, 0.82, 0.92)
+    samples = [min(duration - 0.2, max(0.2, duration * f)) for f in fractions]
     frame_stats = []
     for i, t in enumerate(samples):
         png = LOGS_DIR / f"qa_{path.stem}_t{i}.png"
@@ -217,24 +219,39 @@ def qa_clip(path: Path) -> tuple[bool, Path, list[Check]]:
             checks.append(Check(f"frame@{t:.1f}s", False, f"decode failed: {exc}"))
 
     if frame_stats:
-        corner = sum(s["corner_mean_alpha"] for s in frame_stats) / len(frame_stats)
-        interior = sum(s["interior_opaque_frac"] for s in frame_stats) / len(frame_stats)
-        green = sum(s["green_among_opaque"] for s in frame_stats) / len(frame_stats)
-        chroma = sum(s["chroma_mean"] for s in frame_stats) / len(frame_stats)
+        empty = [s for s in frame_stats if s["interior_opaque_frac"] < 0.05]
+        occupied = [s for s in frame_stats if s["interior_opaque_frac"] >= 0.05]
+        checks.append(
+            Check(
+                "walk-in",
+                True,
+                f"locked camera: {len(empty)} empty-plate sample(s), "
+                f"{len(occupied)} on-plate sample(s) (operator walks in/out)",
+                warn=bool(empty) and not occupied,
+            )
+        )
+        corner_src = empty if empty else frame_stats
+        subject_src = occupied if occupied else frame_stats
+        corner = sum(s["corner_mean_alpha"] for s in corner_src) / len(corner_src)
+        interior = sum(s["interior_opaque_frac"] for s in subject_src) / len(subject_src)
+        green = sum(s["green_among_opaque"] for s in subject_src) / len(subject_src)
+        chroma = sum(s["chroma_mean"] for s in subject_src) / len(subject_src)
         corner_ok = corner < 48 or (corner < 140 and interior > 0.15)
         checks.append(
             Check(
                 "corners-transparent",
                 corner_ok,
-                f"mean corner alpha={corner:.1f} (want < 48; <140 allowed if subject is present)",
+                f"mean corner alpha={corner:.1f} on empty-plate samples "
+                f"(want < 48; <140 allowed if subject is present)",
                 warn=corner_ok and corner >= 48,
             )
         )
         checks.append(
             Check(
                 "subject-present",
-                interior > 0.08,
-                f"interior opaque fraction={interior:.3f} (subject not keyed out)",
+                bool(occupied) and interior > 0.08,
+                f"on-plate interior opaque={interior:.3f} "
+                f"({len(occupied)} frame(s); intro walk-in ignored)",
             )
         )
         checks.append(
@@ -253,11 +270,12 @@ def qa_clip(path: Path) -> tuple[bool, Path, list[Check]]:
             )
         )
         for st in frame_stats:
+            kind = "empty-plate" if st["interior_opaque_frac"] < 0.05 else "on-plate"
             checks.append(
                 Check(
                     f"sample-{st['t']:.1f}s",
                     True,
-                    f"{st['png'].name} trans={st['transparent_frac']:.0%} "
+                    f"{kind} {st['png'].name} trans={st['transparent_frac']:.0%} "
                     f"opaque={st['opaque_frac']:.0%} interior={st['interior_opaque_frac']:.0%}",
                 )
             )

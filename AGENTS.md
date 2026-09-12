@@ -2,6 +2,8 @@
 
 This repo is run from a **terminal AI agent** (Grok Build, Claude Code, Google Antigravity / agy). The HTML pages are optional docs. Do not wait for a browser UI.
 
+**Shooting model:** locked camera, greenscreen does not move, one-person operation. The operator walks in and out of the plate. Crop from the *empty* green (most-green frame). QA ignores empty intro frames; it scores the talking-head section.
+
 You **run the keyer and quality-assure the output**. A file does not leave this folder for Canva until `qa.py` reports **PASS**.
 
 ## Default job
